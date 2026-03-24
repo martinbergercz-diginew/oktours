@@ -27,6 +27,23 @@ Static HTML prototype for OK Tours corporate travel website.
 
 ---
 
+## Git Workflow
+
+This project is part of a monorepo. After every change: **commit → push → deploy** (all three, every time).
+
+Run all git commands from the **repo root**:
+
+```bash
+cd /Users/martinberger/Documents/Prototypes/prototypes
+git add ok-tours/
+git commit -m "Description of changes"
+git push
+```
+
+Work directly on `main`. No feature branches needed for routine changes.
+
+---
+
 ## Deploying to VPS (dev.signi.com)
 
 This is a static HTML project — no build step needed. Just rsync the files directly.
@@ -36,7 +53,7 @@ This is a static HTML project — no build step needed. Just rsync the files dir
 Run from the `ok-tours/` directory:
 
 ```bash
-rsync -avz --delete --exclude='.DS_Store' --exclude='CLAUDE.md' . root@dev.signi.com:/var/www/dev/prototypes/ok-tours/
+rsync -avz --delete --exclude='.DS_Store' --exclude='CLAUDE.md' --exclude='.claude' . root@dev.signi.com:/var/www/dev/prototypes/ok-tours/
 ```
 
 ### Important notes
