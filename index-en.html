@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OK TOURS, a.s. – Firemní cestování na světové úrovni</title>
+  <title>OK TOURS, a.s. – World-Class Corporate Travel</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
     /* ── Reset & Base ─────────────────────────────────────── */
@@ -28,18 +28,17 @@
     /* ── Navigation ───────────────────────────────────────── */
     nav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
-      background: rgba(255,255,255,.97);
+      background: rgba(10,31,68,.96);
       backdrop-filter: blur(8px);
       display: flex; align-items: center; justify-content: space-between;
       padding: 0 5vw; height: 70px;
-      box-shadow: 0 2px 16px rgba(10,31,68,.10);
+      box-shadow: 0 2px 16px rgba(0,0,0,.25);
     }
     .nav-logo {
       display: flex; align-items: center; gap: 0;
     }
     .nav-logo img {
       height: 36px; width: auto;
-      filter: invert(1) brightness(0);
     }
     .nav-logo .logo-as {
       font-family: 'Montserrat', sans-serif;
@@ -48,26 +47,26 @@
     }
     .nav-links { display: flex; gap: 28px; list-style: none; }
     .nav-links a {
-      font-size: .875rem; font-weight: 500; color: var(--navy);
+      font-size: .875rem; font-weight: 500; color: rgba(255,255,255,.82);
       transition: color .2s;
     }
-    .nav-links a:hover { color: var(--blue); }
+    .nav-links a:hover { color: var(--gold); }
     .nav-cta {
-      background: var(--navy); color: #fff !important;
+      background: var(--gold); color: var(--navy) !important;
       padding: 8px 20px; border-radius: 6px;
       font-weight: 700 !important; transition: opacity .2s !important;
     }
-    .nav-cta:hover { opacity: .85; }
+    .nav-cta:hover { opacity: .88; }
     .nav-toggle { display: none; background: none; border: none; cursor: pointer; }
     .nav-toggle span {
-      display: block; width: 24px; height: 2px; background: var(--navy); margin: 5px 0;
+      display: block; width: 24px; height: 2px; background: #fff; margin: 5px 0;
       transition: .3s;
     }
 
     /* ── Hero ─────────────────────────────────────────────── */
     #hero {
       min-height: 100vh;
-      background: linear-gradient(135deg, #e8f0fe 0%, #f4f7fb 55%, #ffffff 100%);
+      background: linear-gradient(135deg, #071628 0%, #0a1f44 55%, #123470 100%);
       display: flex; align-items: center; justify-content: center;
       text-align: center; padding: 120px 5vw 80px;
       position: relative; overflow: hidden;
@@ -76,12 +75,12 @@
     #hero::before {
       content: '';
       position: absolute; inset: 0; z-index: 0;
-      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%231a56db' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
     }
     .hero-badge {
       display: inline-flex; align-items: center; gap: 8px;
-      background: rgba(26,86,219,.08); border: 1px solid rgba(26,86,219,.2);
-      color: var(--blue); padding: 6px 16px; border-radius: 30px;
+      background: rgba(201,168,76,.15); border: 1px solid rgba(201,168,76,.35);
+      color: var(--gold); padding: 6px 16px; border-radius: 30px;
       font-size: .8rem; font-weight: 600; letter-spacing: 1px;
       text-transform: uppercase; margin-bottom: 28px;
     }
@@ -89,45 +88,45 @@
     #hero h1 {
       font-family: 'Montserrat', sans-serif;
       font-size: clamp(2rem, 5vw, 3.4rem);
-      font-weight: 700; color: var(--navy); line-height: 1.2;
+      font-weight: 700; color: #fff; line-height: 1.2;
       max-width: 820px; margin: 0 auto 24px;
     }
-    #hero h1 em { color: var(--blue); font-style: normal; }
+    #hero h1 em { color: var(--gold); font-style: normal; }
     #hero p {
       font-size: clamp(1rem, 2vw, 1.2rem);
-      color: var(--muted);
+      color: rgba(255,255,255,.75);
       max-width: 680px; margin: 0 auto 44px; line-height: 1.8;
     }
     .hero-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
     .btn-primary {
-      background: var(--navy); color: #fff;
+      background: var(--gold); color: var(--navy);
       padding: 14px 36px; border-radius: 8px;
       font-family: 'Montserrat', sans-serif;
       font-weight: 700; font-size: .95rem;
       letter-spacing: .5px;
       transition: transform .2s, box-shadow .2s;
-      box-shadow: 0 4px 20px rgba(10,31,68,.25);
+      box-shadow: 0 4px 20px rgba(201,168,76,.45);
     }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(10,31,68,.35); }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(201,168,76,.55); }
     .btn-outline {
-      border: 2px solid rgba(10,31,68,.3); color: var(--navy);
+      border: 2px solid rgba(255,255,255,.4); color: #fff;
       padding: 14px 36px; border-radius: 8px;
       font-family: 'Montserrat', sans-serif;
       font-weight: 600; font-size: .95rem;
       transition: border-color .2s, background .2s;
     }
-    .btn-outline:hover { border-color: var(--blue); color: var(--blue); background: rgba(26,86,219,.05); }
+    .btn-outline:hover { border-color: var(--gold); background: rgba(201,168,76,.08); }
     .hero-stats {
       display: flex; gap: 48px; justify-content: center;
       flex-wrap: wrap; margin-top: 72px; padding-top: 48px;
-      border-top: 1px solid rgba(10,31,68,.1);
+      border-top: 1px solid rgba(255,255,255,.1);
     }
     .stat { text-align: center; }
     .stat .num {
       font-family: 'Montserrat', sans-serif;
-      font-size: 2.2rem; font-weight: 700; color: var(--blue); display: block;
+      font-size: 2.2rem; font-weight: 700; color: var(--gold); display: block;
     }
-    .stat .label { font-size: .8rem; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+    .stat .label { font-size: .8rem; color: rgba(255,255,255,.55); letter-spacing: 1px; text-transform: uppercase; }
 
     /* ── Sections shared ──────────────────────────────────── */
     section { padding: 96px 5vw; }
@@ -304,48 +303,47 @@
     .portfolio-link:hover { text-decoration: underline; }
 
     /* ── Contact ──────────────────────────────────────────── */
-    #kontakt { background: var(--light); color: var(--text); }
-    #kontakt h2 { color: var(--navy); }
-    #kontakt .lead { color: var(--muted); }
+    #kontakt { background: var(--navy); color: #fff; }
+    #kontakt h2 { color: #fff; }
+    #kontakt .lead { color: rgba(255,255,255,.65); }
     .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; margin-top: 48px; }
     .contact-info { display: flex; flex-direction: column; gap: 28px; }
     .contact-item { display: flex; gap: 16px; align-items: flex-start; }
     .contact-item .ci-icon {
       width: 48px; height: 48px; flex-shrink: 0;
-      background: rgba(26,86,219,.1); border-radius: 10px;
+      background: rgba(255,255,255,.08); border-radius: 10px;
       display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
     }
-    .contact-item h4 { font-weight: 600; color: var(--blue); margin-bottom: 4px; font-size: .88rem; letter-spacing: .5px; text-transform: uppercase; }
-    .contact-item p { color: var(--text); font-size: .95rem; line-height: 1.7; }
+    .contact-item h4 { font-weight: 600; color: var(--gold); margin-bottom: 4px; font-size: .88rem; letter-spacing: .5px; text-transform: uppercase; }
+    .contact-item p { color: rgba(255,255,255,.75); font-size: .95rem; line-height: 1.7; }
     form { display: flex; flex-direction: column; gap: 16px; }
     form input, form textarea, form select {
       padding: 14px 18px; border-radius: 8px;
-      background: #fff;
-      border: 1px solid rgba(10,31,68,.15);
-      color: var(--text); font-family: 'Open Sans', sans-serif; font-size: .9rem;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.15);
+      color: #fff; font-family: 'Open Sans', sans-serif; font-size: .9rem;
       transition: border-color .2s;
     }
-    form input::placeholder, form textarea::placeholder { color: #aab; }
-    form input:focus, form textarea:focus, form select:focus { outline: none; border-color: var(--blue); }
+    form input::placeholder, form textarea::placeholder { color: rgba(255,255,255,.35); }
+    form input:focus, form textarea:focus, form select:focus { outline: none; border-color: var(--gold); }
     form textarea { min-height: 130px; resize: vertical; }
-    form select option { background: #fff; color: var(--text); }
+    form select option { background: var(--navy); }
     form button {
-      background: var(--navy); color: #fff;
+      background: var(--gold); color: var(--navy);
       padding: 15px 36px; border-radius: 8px; border: none;
       font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: .95rem;
       cursor: pointer; transition: transform .2s, box-shadow .2s;
-      box-shadow: 0 4px 16px rgba(10,31,68,.2);
+      box-shadow: 0 4px 16px rgba(201,168,76,.35);
     }
-    form button:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(10,31,68,.3); }
+    form button:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(201,168,76,.5); }
 
     /* ── Footer ───────────────────────────────────────────── */
     footer {
-      background: #e8edf5; color: var(--muted);
+      background: #040d1e; color: rgba(255,255,255,.45);
       text-align: center; padding: 32px 5vw;
-      font-size: .82rem; border-top: 1px solid rgba(10,31,68,.08);
+      font-size: .82rem;
     }
-    footer a { color: var(--blue); }
-    footer strong { color: var(--navy); }
+    footer a { color: var(--gold); }
 
     /* ── Responsive ───────────────────────────────────────── */
     @media (max-width: 1024px) {
@@ -353,7 +351,7 @@
     }
     @media (max-width: 768px) {
       nav { padding: 0 5vw; }
-      .nav-links { display: none; flex-direction: column; position: absolute; top: 70px; left: 0; right: 0; background: #fff; border-top: 1px solid rgba(10,31,68,.08); padding: 24px 5vw; gap: 16px; box-shadow: 0 8px 24px rgba(10,31,68,.1); }
+      .nav-links { display: none; flex-direction: column; position: absolute; top: 70px; left: 0; right: 0; background: var(--navy); padding: 24px 5vw; gap: 16px; }
       .nav-links.open { display: flex; }
       .nav-toggle { display: block; }
       .two-col, .cards-grid, .tech-grid, .travel-tips,
@@ -373,17 +371,21 @@
 <nav id="navbar">
   <a href="#hero" class="nav-logo">
     <img src="logo_w.png" alt="OK TOURS, a.s." />
-    
+
   </a>
   <ul class="nav-links" id="navLinks">
-    <li><a href="#firemni-cestovani">Firemní cestování</a></li>
-    <li><a href="#zakaznicky-servis">Zákaznický servis</a></li>
-    <li><a href="#technologie">Technologie</a></li>
-    <li><a href="#pred-cestou">Před cestou</a></li>
-    <li><a href="#o-nas">O nás</a></li>
+    <li><a href="#firemni-cestovani">Corporate Travel</a></li>
+    <li><a href="#zakaznicky-servis">Customer Service</a></li>
+    <li><a href="#technologie">Technology</a></li>
+    <li><a href="#pred-cestou">Before You Travel</a></li>
+    <li><a href="#o-nas">About Us</a></li>
     <li><a href="#portfolio">Portfolio</a></li>
-    <li><a href="#kontakt" class="nav-cta">Kontakt</a></li>
+    <li><a href="#kontakt" class="nav-cta">Contact</a></li>
   </ul>
+  <div class="lang-switch" style="display:flex;gap:8px;align-items:center;margin-left:16px;">
+    <a href="index.html" style="font-size:1.2rem;opacity:.5;transition:opacity .2s;" title="Čeština" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'">🇨🇿</a>
+    <span style="font-size:1.2rem;opacity:1;cursor:default;" title="English">🇬🇧</span>
+  </div>
   <button class="nav-toggle" id="navToggle" aria-label="Menu">
     <span></span><span></span><span></span>
   </button>
@@ -393,20 +395,20 @@
 <section id="hero">
   <div>
     <div class="hero-badge" style="gap:10px;padding:8px 20px;">
-      <img src="logo_w.png" alt="OK TOURS" style="height:24px;display:block;filter:invert(1) brightness(0);" />
-      <span style="opacity:.65;font-size:.75rem;letter-spacing:1.5px;">Firemní cestování · Corporate Travel</span>
+      <img src="logo_w.png" alt="OK TOURS" style="height:24px;display:block;" />
+      <span style="opacity:.65;font-size:.75rem;letter-spacing:1.5px;">Corporate Travel · Business Solutions</span>
     </div>
-    <h1>Jsme tým profesionálů pro <em>vysoký standard</em> firemního cestování.</h1>
-    <p>Vybudovali jsme si silnou pozici na trhu a díky novým technologiím a našim zkušeným zaměstnancům nabízíme komplexní řešení cestovních služeb do celého světa.</p>
+    <h1>We are a team of professionals delivering <em>world-class</em> corporate travel.</h1>
+    <p>We have built a strong market position and, thanks to new technologies and our experienced staff, we offer comprehensive travel solutions worldwide.</p>
     <div class="hero-btns">
-      <a href="#kontakt" class="btn-primary">Kontaktujte nás</a>
-      <a href="#firemni-cestovani" class="btn-outline">Zjistit více</a>
+      <a href="#kontakt" class="btn-primary">Contact Us</a>
+      <a href="#firemni-cestovani" class="btn-outline">Learn More</a>
     </div>
     <div class="hero-stats">
-      <div class="stat"><span class="num">25+</span><span class="label">let zkušeností</span></div>
-      <div class="stat"><span class="num">5</span><span class="label">partnerů Travel Alliance</span></div>
-      <div class="stat"><span class="num">100+</span><span class="label">spokojených klientů</span></div>
-      <div class="stat"><span class="num">150+</span><span class="label">destinací světa</span></div>
+      <div class="stat"><span class="num">25+</span><span class="label">years of experience</span></div>
+      <div class="stat"><span class="num">5</span><span class="label">Travel Alliance partners</span></div>
+      <div class="stat"><span class="num">250+</span><span class="label">satisfied clients</span></div>
+      <div class="stat"><span class="num">150+</span><span class="label">destinations worldwide</span></div>
     </div>
   </div>
 </section>
@@ -414,7 +416,7 @@
 <!-- ── VISUAL BREAK ───────────────────────────────────────── -->
 <section id="visual-break" style="padding:0;margin:0;line-height:0;background:#0a1f44;">
   <div style="position:relative;overflow:hidden;max-height:520px;">
-    <img src="image.png" alt="Firemní cestování s OK TOURS"
+    <img src="image.png" alt="Corporate travel with OK TOURS"
       style="width:100%;max-height:520px;object-fit:cover;object-position:center 30%;display:block;opacity:.92;" />
     <div style="
       position:absolute;inset:0;
@@ -426,76 +428,76 @@
           font-size:clamp(1.3rem,2.8vw,2rem);
           font-weight:700;color:#fff;line-height:1.35;
           text-shadow:0 2px 12px rgba(0,0,0,.3);">
-          Cestujte s námi - <span style="color:#c9a84c;">kamkoli po světě.</span>
+          Travel with us — <span style="color:#c9a84c;">anywhere in the world.</span>
         </p>
         <p style="margin-top:14px;color:rgba(255,255,255,.75);font-size:.95rem;line-height:1.7;">
-          Komplexní firemní cestování s osobním přístupem a nejmodernějšími technologiemi.
+          Comprehensive corporate travel with a personal touch and cutting-edge technology.
         </p>
         <a href="#kontakt" style="
           display:inline-block;margin-top:24px;
           background:#c9a84c;color:#0a1f44;
           padding:12px 28px;border-radius:8px;
           font-family:'Montserrat',sans-serif;font-weight:700;font-size:.9rem;">
-          Kontaktujte nás
+          Contact Us
         </a>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ── FIREMNÍ CESTOVÁNÍ ───────────────────────────────────── -->
+<!-- ── CORPORATE TRAVEL ───────────────────────────────────── -->
 <section id="firemni-cestovani">
   <div class="section-inner">
     <div class="two-col">
       <div>
-        <span class="section-tag">Firemní cestování</span>
-        <h2>Optimalizujeme náklady vašich služebních cest</h2>
+        <span class="section-tag">Corporate Travel</span>
+        <h2>We optimize the costs of your business trips</h2>
         <div class="divider"></div>
-        <p class="lead">Díky profesionálním zkušenostem našich cestovních expertů a dlouholetým vztahům s leteckými společnostmi a dalšími dodavateli jsme schopni dosáhnout výrazných úspor při zachování vysokého komfortu.</p>
+        <p class="lead">Thanks to the professional expertise of our travel specialists and long-standing relationships with airlines and other suppliers, we are able to achieve significant savings while maintaining the highest level of comfort.</p>
         <ul class="feature-list">
           <li>
-            <div class="icon">✈️</div>
+            <div class="icon"><img src="3127251.png" alt="Airlines" style="width:28px;height:28px;" /></div>
             <div>
-              <h4>Letecké společnosti</h4>
-              <p>Prémiové vztahy s předními world carriers zajišťují výhodné sazby a flexibilitu rezervací.</p>
+              <h4>Airlines</h4>
+              <p>Premium relationships with leading world carriers ensure competitive rates and booking flexibility.</p>
             </div>
           </li>
           <li>
-            <div class="icon">🏨</div>
+            <div class="icon"><img src="3069333.png" alt="Accommodation" style="width:28px;height:28px;" /></div>
             <div>
-              <h4>Ubytování po celém světě</h4>
-              <p>Smluvní hotelové sazby a firemní benefity u tisíců hotelů na celém světě.</p>
+              <h4>Worldwide Accommodation</h4>
+              <p>Contracted hotel rates and corporate benefits at thousands of hotels around the world.</p>
             </div>
           </li>
           <li>
-            <div class="icon">🚗</div>
+            <div class="icon"><img src="3127201.png" alt="Ground Transport" style="width:28px;height:28px;" /></div>
             <div>
-              <h4>Pozemní doprava</h4>
-              <p>Pronájem vozů, transfery a ground transport s plnou koordinací itineráře.</p>
+              <h4>Ground Transport</h4>
+              <p>Car rentals, transfers, and ground transport with full itinerary coordination.</p>
             </div>
           </li>
         </ul>
       </div>
       <div class="alliance-card">
-        <div class="tag">Zakládající člen a akcionář</div>
+        <div class="tag">Founding member and shareholder</div>
         <h3>Travel Alliance a.s.</h3>
-        <p>Jednotnou cestovní politikou pěti dodavatelů cestovních služeb dosahujeme výhodné cenové podmínky a výrazné úspory v cestovních nákladech pro naše klienty.</p>
+        <p>Through a unified travel policy of five travel service providers, we achieve favorable pricing conditions and significant savings in travel costs for our clients.</p>
         <div class="alliance-pillars">
           <div class="pillar">
             <div class="num">5</div>
-            <div class="desc">partnerských dodavatelů</div>
+            <div class="desc">partner suppliers</div>
           </div>
           <div class="pillar">
             <div class="num">1</div>
-            <div class="desc">jednotná cestovní politika</div>
+            <div class="desc">unified travel policy</div>
           </div>
           <div class="pillar">
             <div class="num">↓</div>
-            <div class="desc">optimalizace nákladů</div>
+            <div class="desc">cost optimization</div>
           </div>
           <div class="pillar">
             <div class="num">✓</div>
-            <div class="desc">akcionářská síla</div>
+            <div class="desc">shareholder strength</div>
           </div>
         </div>
       </div>
@@ -503,42 +505,43 @@
   </div>
 </section>
 
-<!-- ── ZÁKAZNICKÝ SERVIS ───────────────────────────────────── -->
+<!-- ── CUSTOMER SERVICE ───────────────────────────────────── -->
 <section id="zakaznicky-servis">
   <div class="section-inner">
-    <span class="section-tag">Zákaznický servis</span>
-    <h2>Péče, která překračuje vaše očekávání</h2>
+    <span class="section-tag">Customer Service</span>
+    <h2>Service that exceeds your expectations</h2>
     <div class="divider"></div>
-    <p class="lead">Díky dlouholetým odborným zkušenostem našich zaměstnanců zajišťujeme profesionální a komplexní cestovní služby na vysoké úrovni kvality.</p>
+    <p class="lead">Thanks to the long-standing expertise of our staff, we provide professional and comprehensive travel services at the highest quality level.</p>
     <div class="cards-grid">
       <div class="card accent-blue">
         <div class="card-icon">🤝</div>
         <h3>Key Account Management</h3>
-        <p>Máme fungující a na osobní péči postavený KAM systém. Naši Key Account manageři zajišťují pro klíčové zákazníky nejvyšší úroveň služeb za optimální cestovní náklady.</p>
+        <p>We have an effective, personally-driven KAM system. Our Key Account Managers ensure the highest level of service at optimal travel costs for key clients.</p>
       </div>
       <div class="card accent-gold">
         <div class="card-icon">🌐</div>
-        <h3>Komplexní řešení</h3>
-        <p>Využívání nejnovějších technologií a zajištění kvalitních zákaznických služeb má ve společnosti OK TOURS strategický význam.</p>
+        <h3>Comprehensive Solutions</h3>
+        <p>Leveraging the latest technologies and delivering quality customer service is of strategic importance at OK TOURS.</p>
       </div>
       <div class="card accent-navy">
         <div class="card-icon">🛡️</div>
-        <h3>Zákaznická ochrana</h3>
-        <p>Naši zákazníci si mohou být jisti, že v případě pochybení letecké společnosti se jim nedostane pouze omluva — aktivně hájíme jejich práva.</p>
+        <h3>Customer Protection</h3>
+        <p>Our clients can rest assured that in case of an airline's error, they will receive more than just an apology — we actively defend their rights.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ── TECHNOLOGIE ─────────────────────────────────────────── -->
+<!-- ── TECHNOLOGY ─────────────────────────────────────────── -->
 <section id="technologie">
   <div class="section-inner">
     <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:24px;margin-bottom:0">
       <div>
-        <span class="section-tag">Technologie</span>
-        <h2>Moderní technologie v&nbsp;osobní péči</h2>
+        <span class="section-tag">Technology</span>
+        <h2>Modern technology with&nbsp;a personal touch</h2>
         <div class="divider"></div>
-        <p class="lead" style="margin-bottom:0">V zajišťování cestovních služeb se prosazují dynamicky se měnící technologie. Spojujeme osobní péči o klienta s&nbsp;novými technologickými řešeními pro efektivní, hospodárné a spolehlivé cestování.</p>
+        <p class="lead" style="margin-bottom:0">Rapidly evolving technologies are transforming travel services. We combine personal client care with&nbsp;new technological solutions for efficient, cost-effective, and reliable travel.</p>
+        <a href="#kontakt" class="btn-primary" style="display:inline-block;margin-top:24px;font-size:.85rem;padding:12px 28px;">Contact Us</a>
       </div>
     </div>
     <div class="tech-grid">
@@ -546,15 +549,15 @@
         <div class="tech-logo">🌐</div>
         <div>
           <h4>Travelport GDS</h4>
-          <p>Globální distribuční systém zajišťující přístup k lety, hotelům a pronájmům vozů od tisíců světových poskytovatelů v reálném čase.</p>
-          <span class="tech-tag">GDS platforma</span>
+          <p>A global distribution system providing real-time access to flights, hotels, and car rentals from thousands of worldwide providers.</p>
+          <span class="tech-tag">GDS platform</span>
         </div>
       </div>
       <div class="tech-card">
         <div class="tech-logo">🔗</div>
         <div>
           <h4>Tripgate</h4>
-          <p>Moderní online booking tool umožňující zaměstnancům vašich firem rezervovat cesty v rámci firemní politiky s plnou kontrolou nákladů.</p>
+          <p>A modern online booking tool that allows your employees to book travel within corporate policy with full cost control.</p>
           <span class="tech-tag">Online booking</span>
         </div>
       </div>
@@ -562,15 +565,15 @@
         <div class="tech-logo">📊</div>
         <div>
           <h4>Reporting & Analytics</h4>
-          <p>Detailní reporty cestovních výdajů a analytické nástroje pro strategické řízení firemní cestovní politiky a optimalizaci nákladů.</p>
-          <span class="tech-tag">Datová analýza</span>
+          <p>Detailed travel expense reports and analytical tools for strategic management of corporate travel policy and cost optimization.</p>
+          <span class="tech-tag">Data analytics</span>
         </div>
       </div>
       <div class="tech-card">
         <div class="tech-logo">📱</div>
         <div>
-          <h4>Mobilní přístup & 24/7 podpora</h4>
-          <p>Nepřetržitá podpora cestujících prostřednictvím moderních komunikačních kanálů — telefon, e-mail, chat — kdekoliv na světě.</p>
+          <h4>Mobile Access & 24/7 Support</h4>
+          <p>Round-the-clock traveler support through modern communication channels — phone, email, chat — anywhere in the world.</p>
           <span class="tech-tag">Always on</span>
         </div>
       </div>
@@ -578,97 +581,97 @@
   </div>
 </section>
 
-<!-- ── PŘED CESTOU ─────────────────────────────────────────── -->
+<!-- ── BEFORE YOU TRAVEL ─────────────────────────────────── -->
 <section id="pred-cestou">
   <div class="section-inner">
-    <span class="section-tag gold">Před cestou</span>
-    <h2>Vše, co potřebujete vědět před odjezdem</h2>
+    <span class="section-tag gold">Before You Travel</span>
+    <h2>Everything you need to know before departure</h2>
     <div class="divider"></div>
-    <p class="lead">Bezpečné a bezproblémové cestování začíná dobrou přípravou. Nabízíme přehled klíčových informací, které vám pomohou připravit se na každou pracovní cestu.</p>
+    <p class="lead">Safe and smooth travel starts with good preparation. We provide an overview of key information to help you prepare for every business trip.</p>
     <div class="travel-tips">
       <div class="tip-card">
         <div class="tip-icon">🛂</div>
-        <h3>Cestovní doklady</h3>
-        <p>Platnost pasu, víza, potvrzení o pracovní cestě. Upozorníme vás včas na vše potřebné pro vstup do dané destinace.</p>
-        <a href="#kontakt" class="cta-link">Poradit se →</a>
+        <h3>Travel Documents</h3>
+        <p>Passport validity, visas, business trip confirmations. We will notify you in advance of everything required for entry to your destination.</p>
+        <a href="https://drozd.mzv.gov.cz/" target="_blank" rel="noopener" class="cta-link">DROZD System →</a>
       </div>
       <div class="tip-card">
         <div class="tip-icon">🔒</div>
-        <h3>Bezpečnostní situace</h3>
-        <p>Průběžně sledujeme bezpečnostní podmínky v cílových zemích a upozorníme vás na případná rizika či cestovní doporučení MZV.</p>
-        <a href="#kontakt" class="cta-link">Zjistit více →</a>
+        <h3>Security Situation</h3>
+        <p>We continuously monitor security conditions in destination countries and alert you to any risks or travel advisories from the Ministry of Foreign Affairs.</p>
+        <a href="https://drozd.mzv.gov.cz/" target="_blank" rel="noopener" class="cta-link">DROZD System →</a>
       </div>
       <div class="tip-card">
         <div class="tip-icon">🏥</div>
-        <h3>Zdraví & pojištění</h3>
-        <p>Zdravotní pojištění do zahraničí, vakcinační požadavky, lékařská doporučení pro konkrétní destinace.</p>
-        <a href="#kontakt" class="cta-link">Zjistit více →</a>
+        <h3>Health & Insurance</h3>
+        <p>International health insurance, vaccination requirements, and medical recommendations for specific destinations.</p>
+        <a href="https://drozd.mzv.gov.cz/" target="_blank" rel="noopener" class="cta-link">DROZD System →</a>
       </div>
       <div class="tip-card">
         <div class="tip-icon">💱</div>
-        <h3>Místní měna & finance</h3>
-        <p>Informace o platebních zvyklostech, směnných kurzech a doporučeních pro bezpečné nakládání s financemi v zahraničí.</p>
-        <a href="#kontakt" class="cta-link">Poradit se →</a>
+        <h3>Local Currency & Finance</h3>
+        <p>Information on payment customs, exchange rates, and recommendations for safe handling of finances abroad.</p>
+        <a href="#kontakt" class="cta-link">Get Advice →</a>
       </div>
       <div class="tip-card">
         <div class="tip-icon">📋</div>
-        <h3>Firemní travel politika</h3>
-        <p>Pomáháme nastavit a dodržovat interní pravidla cestování — schvalovací workflow, kategorie letenek, hotelové kategorie.</p>
-        <a href="#kontakt" class="cta-link">Zjistit více →</a>
+        <h3>Corporate Travel Policy</h3>
+        <p>We help establish and enforce internal travel rules — approval workflows, ticket categories, hotel categories.</p>
+        <a href="#kontakt" class="cta-link">Learn More →</a>
       </div>
       <div class="tip-card">
         <div class="tip-icon">🌡️</div>
-        <h3>Klima & sezóna</h3>
-        <p>Informace o počasí, oblékání a dalších praktických tipech pro pohodlný pobyt v dané destinaci.</p>
-        <a href="#kontakt" class="cta-link">Poradit se →</a>
+        <h3>Climate & Season</h3>
+        <p>Information on weather, dress codes, and other practical tips for a comfortable stay at your destination.</p>
+        <a href="#kontakt" class="cta-link">Get Advice →</a>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ── O NÁS / TÝM ─────────────────────────────────────────── -->
+<!-- ── ABOUT US / TEAM ─────────────────────────────────────── -->
 <section id="o-nas">
   <div class="section-inner">
-    <span class="section-tag">O nás</span>
-    <h2>Poznejte náš tým</h2>
+    <span class="section-tag">About Us</span>
+    <h2>Meet Our Team</h2>
     <div class="divider"></div>
-    <p class="lead">Za každou úspěšnou cestou stojí zkušený člověk. Náš tým tvoří odborníci s letitou praxí v cestovním ruchu, kteří jsou vám vždy k dispozici.</p>
+    <p class="lead">Behind every successful trip stands an experienced professional. Our team is made up of experts with years of practice in the travel industry, always at your service.</p>
     <div class="team-grid">
       <div class="team-card">
         <div class="team-photo">👤</div>
         <div class="team-info">
-          <h4>Jméno Příjmení</h4>
-          <div class="role">Ředitel / CEO</div>
-          <div class="exp">Praxe v oboru: <span>20+ let</span></div>
+          <h4>First Last Name</h4>
+          <div class="role">Director / CEO</div>
+          <div class="exp">Industry experience: <span>20+ years</span></div>
         </div>
       </div>
       <div class="team-card">
         <div class="team-photo">👤</div>
         <div class="team-info">
-          <h4>Jméno Příjmení</h4>
+          <h4>First Last Name</h4>
           <div class="role">Key Account Manager</div>
-          <div class="exp">Praxe v oboru: <span>15+ let</span></div>
+          <div class="exp">Industry experience: <span>15+ years</span></div>
         </div>
       </div>
       <div class="team-card">
         <div class="team-photo">👤</div>
         <div class="team-info">
-          <h4>Jméno Příjmení</h4>
-          <div class="role">Cestovní expert</div>
-          <div class="exp">Praxe v oboru: <span>12+ let</span></div>
+          <h4>First Last Name</h4>
+          <div class="role">Travel Expert</div>
+          <div class="exp">Industry experience: <span>12+ years</span></div>
         </div>
       </div>
       <div class="team-card">
         <div class="team-photo">👤</div>
         <div class="team-info">
-          <h4>Jméno Příjmení</h4>
-          <div class="role">Technologický specialista</div>
-          <div class="exp">Praxe v oboru: <span>8+ let</span></div>
+          <h4>First Last Name</h4>
+          <div class="role">Technology Specialist</div>
+          <div class="exp">Industry experience: <span>8+ years</span></div>
         </div>
       </div>
     </div>
     <p style="text-align:center;margin-top:32px;color:var(--muted);font-size:.9rem;">
-      <em>Fotografie a podrobnější profily zaměstnanců budou doplněny.</em>
+      <em>Photos and detailed employee profiles will be added.</em>
     </p>
   </div>
 </section>
@@ -676,86 +679,94 @@
 <!-- ── PORTFOLIO ───────────────────────────────────────────── -->
 <section id="portfolio">
   <div class="section-inner">
-    <span class="section-tag gold">Naše portfolio</span>
-    <h2>Další služby skupiny OK</h2>
+    <span class="section-tag gold">Our Portfolio</span>
+    <h2>Additional Services of the OK Group</h2>
     <div class="divider"></div>
-    <p class="lead">Kromě firemního cestování nabízíme prostřednictvím partnerů skupiny OK unikátní ubytovací řešení v&nbsp;Praze.</p>
+    <p class="lead">In addition to corporate travel, we offer unique accommodation solutions in&nbsp;Prague through partners of the OK Group.</p>
     <div class="portfolio-grid">
       <div class="portfolio-card">
         <div class="portfolio-img hotels">🏨</div>
         <div class="portfolio-body">
-          <div class="portfolio-tag">Ubytování</div>
+          <div class="portfolio-tag">Accommodation</div>
           <h3>OK Hotels</h3>
-          <p>Hotelové ubytování pro firemní klientelu s garancí kvality a výhodných sazeb. Přímé smluvní vztahy zajišťují rychlé a bezproblémové rezervace pro vaše zaměstnance.</p>
-          <a href="#kontakt" class="portfolio-link">Zjistit více →</a>
+          <p>Hotel accommodation for corporate clients with guaranteed quality and competitive rates. Direct contractual relationships ensure fast and hassle-free bookings for your employees.</p>
+          <a href="#kontakt" class="portfolio-link">Learn More →</a>
         </div>
       </div>
       <div class="portfolio-card">
         <div class="portfolio-img aparts">🏙️</div>
         <div class="portfolio-body">
-          <div class="portfolio-tag">Luxusní apartmány · Praha</div>
-          <h3>Residence Sibelius – Luxusní Vinohradské Apartmány</h3>
-          <p>Exkluzivní apartmány v prestižní pražské čtvrti Vinohrady. Ideální řešení pro dlouhodobé pobyty manažerů, expatů a náročné klientely vyžadující soukromí a nadstandardní komfort.</p>
-          <a href="#kontakt" class="portfolio-link">Zjistit více →</a>
+          <div class="portfolio-tag">Luxury Apartments · Prague</div>
+          <h3>Residence Sibelius – Luxury Vinohrady Apartments</h3>
+          <p>Exclusive apartments in the prestigious Prague district of Vinohrady. An ideal solution for long-term stays of managers, expats, and discerning clients who require privacy and superior comfort.</p>
+          <a href="#kontakt" class="portfolio-link">Learn More →</a>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ── KONTAKT ─────────────────────────────────────────────── -->
+<!-- ── CONTACT ─────────────────────────────────────────────── -->
 <section id="kontakt">
   <div class="section-inner">
-    <span class="section-tag">Kontakt</span>
-    <h2>Spojte se s&nbsp;námi</h2>
+    <span class="section-tag" style="background:rgba(201,168,76,.15);color:var(--gold)">Contact</span>
+    <h2>Get in&nbsp;Touch</h2>
     <div class="divider"></div>
-    <p class="lead">Rádi vám připravíme individuální nabídku nebo odpovíme na vaše otázky ohledně firemního cestování.</p>
+    <p class="lead">We will be happy to prepare a tailored offer or answer your questions about corporate travel.</p>
     <div class="contact-grid">
       <div class="contact-info">
         <div class="contact-item">
           <div class="ci-icon">📍</div>
           <div>
-            <h4>Adresa</h4>
-            <p>OK TOURS, a.s.<br/>Adresa sídla, Praha, Česká republika</p>
+            <h4>Address</h4>
+            <p>OK TOURS, a.s.<br/>Jana Masaryka 194/39<br/>120 00 Prague 2</p>
+            <p style="margin-top:4px;font-size:.85rem;">Reg. No.: 005 63 391 · VAT ID: CZ699003191</p>
           </div>
         </div>
         <div class="contact-item">
           <div class="ci-icon">📞</div>
           <div>
-            <h4>Telefon</h4>
-            <p>+420 XXX XXX XXX</p>
+            <h4>Phone</h4>
+            <p>+420 222 521 700</p>
           </div>
         </div>
         <div class="contact-item">
           <div class="ci-icon">✉️</div>
           <div>
-            <h4>E-mail</h4>
-            <p>info@oktours.cz</p>
+            <h4>Email</h4>
+            <p><a href="mailto:info@oktours.cz" style="color:var(--gold);text-decoration:underline;">info@oktours.cz</a></p>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="ci-icon">📌</div>
+          <div>
+            <h4>How to Find Us</h4>
+            <p><a href="https://goo.gl/maps/QUwkB78kEdR5yKyz6" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:underline;">View on map →</a></p>
           </div>
         </div>
         <div class="contact-item">
           <div class="ci-icon">🕐</div>
           <div>
-            <h4>Provozní doba</h4>
-            <p>Po–Pá: 8:00 – 18:00<br/>Pohotovost 24/7 pro klienty na cestách</p>
+            <h4>Business Hours</h4>
+            <p>Mon–Fri: 8:00 AM – 6:00 PM<br/>24/7 emergency support for travelers</p>
           </div>
         </div>
       </div>
       <form onsubmit="return false;">
-        <input type="text" placeholder="Vaše jméno a příjmení" required />
-        <input type="email" placeholder="Firemní e-mail" required />
-        <input type="text" placeholder="Název společnosti" />
+        <input type="text" placeholder="Your full name" required />
+        <input type="email" placeholder="Company email" required />
+        <input type="text" placeholder="Company name" />
         <select>
-          <option value="" disabled selected>Oblast zájmu</option>
-          <option>Firemní cestování</option>
+          <option value="" disabled selected>Area of interest</option>
+          <option>Corporate Travel</option>
           <option>Key Account Management</option>
-          <option>Technologická řešení</option>
+          <option>Technology Solutions</option>
           <option>OK Hotels</option>
           <option>Residence Sibelius</option>
-          <option>Jiné</option>
+          <option>Other</option>
         </select>
-        <textarea placeholder="Váš dotaz nebo popis potřeb..."></textarea>
-        <button type="submit">Odeslat dotaz ✈</button>
+        <textarea placeholder="Your inquiry or description of needs..."></textarea>
+        <button type="submit">Send Inquiry ✈</button>
       </form>
     </div>
   </div>
@@ -764,10 +775,10 @@
 <!-- ── FOOTER ──────────────────────────────────────────────── -->
 <footer>
   <div style="margin-bottom:16px">
-    <img src="logo_w.png" alt="OK TOURS" style="height:28px;margin:0 auto;filter:invert(1) brightness(0);opacity:.5;" />
+    <img src="logo_w.png" alt="OK TOURS" style="height:28px;margin:0 auto;opacity:.7;" />
   </div>
-  <p>© 2026 <strong style="color:rgba(255,255,255,.6)">OK TOURS, a.s.</strong> · Všechna práva vyhrazena · <a href="#hero">Zpět nahoru ↑</a></p>
-  <p style="margin-top:8px">Člen skupiny <a href="#portfolio">Travel Alliance a.s.</a></p>
+  <p>© 2026 <strong style="color:rgba(255,255,255,.6)">OK TOURS, a.s.</strong> · All rights reserved · <a href="#hero">Back to top ↑</a></p>
+  <p style="margin-top:8px">Member of the <a href="#portfolio">Travel Alliance a.s.</a> group</p>
 </footer>
 
 <!-- ── Scripts ─────────────────────────────────────────────── -->

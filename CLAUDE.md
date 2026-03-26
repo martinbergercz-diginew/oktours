@@ -1,7 +1,7 @@
 # ok-tours
 
 **Live URL:** https://dev.signi.com/prototypes/ok-tours/
-**Light version:** https://dev.signi.com/prototypes/ok-tours/index-light.html
+**English version:** https://dev.signi.com/prototypes/ok-tours/index-en.html
 **Part of:** `martinbergercz-diginew/prototypes` monorepo
 
 ---
@@ -19,11 +19,12 @@ Static HTML prototype for OK Tours corporate travel website.
 ---
 
 ## Files
-- `index.html` — main dark version
-- `index-light.html` — light version
+- `index.html` — main Czech version (dark theme)
+- `index-en.html` — English version
 - `image.png` — hero image
 - `logo_w.png` — white logo (PNG)
 - `logo.svg` — logo (SVG)
+- `3127251.png`, `3069333.png`, `3127201.png` — section icons
 
 ---
 
@@ -53,7 +54,7 @@ This is a static HTML project — no build step needed. Just rsync the files dir
 Run from the `ok-tours/` directory:
 
 ```bash
-rsync -avz --delete --exclude='.DS_Store' --exclude='CLAUDE.md' --exclude='.claude' . root@dev.signi.com:/var/www/dev/prototypes/ok-tours/
+rsync -avz --delete --exclude='.DS_Store' --exclude='CLAUDE.md' --exclude='.claude' --exclude='offer-state.json' . root@dev.signi.com:/var/www/dev/prototypes/ok-tours/
 ```
 
 ### Important notes
