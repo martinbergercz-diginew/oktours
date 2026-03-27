@@ -183,6 +183,38 @@
       color: var(--blue); font-weight: 600; font-size: .8rem;
     }
     .service-cta:hover { text-decoration: underline; }
+    .alliance-card {
+      background: linear-gradient(135deg, var(--navy) 0%, #1a3a7a 100%);
+      border-radius: var(--radius); padding: 40px; color: #fff;
+      position: relative; overflow: hidden; margin-top: 40px;
+    }
+    .alliance-card::after {
+      content: 'TA';
+      position: absolute; right: -10px; bottom: -20px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 8rem; font-weight: 900;
+      color: rgba(255,255,255,.05); line-height: 1;
+    }
+    .alliance-card .tag {
+      display: inline-block; background: var(--gold); color: var(--navy);
+      font-size: .72rem; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; padding: 4px 12px; border-radius: 30px;
+      margin-bottom: 20px;
+    }
+    .alliance-card h3 {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1.4rem; font-weight: 700; margin-bottom: 16px;
+    }
+    .alliance-card p { color: rgba(255,255,255,.78); line-height: 1.8; font-size: .95rem; }
+    .alliance-pillars {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 24px;
+    }
+    .pillar {
+      background: rgba(255,255,255,.08); border-radius: 8px;
+      padding: 14px 16px;
+    }
+    .pillar .num { font-family: 'Montserrat', sans-serif; font-size: 1.5rem; font-weight: 700; color: var(--gold); }
+    .pillar .desc { font-size: .78rem; color: rgba(255,255,255,.6); margin-top: 2px; }
 
     /* ── Customer Service ─────────────────────────────────── */
     .cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin-top: 48px; }
@@ -482,6 +514,29 @@
         <h3><a href="https://okletenky.cz/ok-ostatni-sluzby/" target="_blank" rel="noopener">Cestovní náhrady</a></h3>
         <p>Opozdil se váš let? Vymáháme náhrady 250–600 EUR od leteckých přepravců zpětně až 24 měsíců.</p>
         <a href="https://okletenky.cz/ok-ostatni-sluzby/" target="_blank" rel="noopener" class="service-cta">Zjistit více →</a>
+      </div>
+    </div>
+    <div class="alliance-card">
+      <div class="tag">Zakládající člen a akcionář</div>
+      <h3>Travel Alliance a.s.</h3>
+      <p>Jednotnou cestovní politikou pěti dodavatelů cestovních služeb dosahujeme výhodné cenové podmínky a výrazné úspory v cestovních nákladech pro naše klienty.</p>
+      <div class="alliance-pillars">
+        <div class="pillar">
+          <div class="num">5</div>
+          <div class="desc">partnerských dodavatelů</div>
+        </div>
+        <div class="pillar">
+          <div class="num">1</div>
+          <div class="desc">jednotná cestovní politika</div>
+        </div>
+        <div class="pillar">
+          <div class="num">↓</div>
+          <div class="desc">optimalizace nákladů</div>
+        </div>
+        <div class="pillar">
+          <div class="num">✓</div>
+          <div class="desc">akcionářská síla</div>
+        </div>
       </div>
     </div>
   </div>
