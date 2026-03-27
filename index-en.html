@@ -156,52 +156,33 @@
       border-radius: 2px; margin-bottom: 28px;
     }
 
-    /* ── Corporate Travel ─────────────────────────────────── */
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
-    .feature-list { list-style: none; display: flex; flex-direction: column; gap: 20px; margin-top: 32px; }
-    .feature-list li {
-      display: flex; gap: 16px; align-items: flex-start;
+    /* ── Corporate Travel / Services Grid ─────────────────── */
+    .services-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 24px; margin-top: 48px;
     }
-    .feature-list .icon {
-      width: 44px; height: 44px; flex-shrink: 0;
-      background: rgba(26,86,219,.1); border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.2rem;
+    .service-tile {
+      background: #fff; border-radius: var(--radius);
+      padding: 28px 20px; box-shadow: var(--shadow);
+      text-align: center; display: flex; flex-direction: column;
+      align-items: center; gap: 10px;
+      transition: transform .25s, box-shadow .25s;
+      border-top: 3px solid transparent;
     }
-    .feature-list h4 { font-weight: 600; color: var(--navy); margin-bottom: 4px; font-size: .95rem; }
-    .feature-list p { font-size: .88rem; color: var(--muted); line-height: 1.7; }
-    .alliance-card {
-      background: linear-gradient(135deg, var(--navy) 0%, #1a3a7a 100%);
-      border-radius: var(--radius); padding: 40px; color: #fff;
-      position: relative; overflow: hidden;
+    .service-tile:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(10,31,68,.16); border-top-color: var(--gold); }
+    .service-icon { font-size: 2.2rem; margin-bottom: 4px; }
+    .service-tile h3 {
+      font-family: 'Montserrat', sans-serif; font-weight: 700;
+      font-size: .95rem; color: var(--navy);
     }
-    .alliance-card::after {
-      content: 'TA';
-      position: absolute; right: -10px; bottom: -20px;
-      font-family: 'Montserrat', sans-serif;
-      font-size: 8rem; font-weight: 900;
-      color: rgba(255,255,255,.05); line-height: 1;
+    .service-tile h3 a { color: inherit; }
+    .service-tile h3 a:hover { color: var(--blue); }
+    .service-tile p { font-size: .83rem; color: var(--muted); line-height: 1.65; }
+    .service-cta {
+      display: inline-block; margin-top: auto; padding-top: 8px;
+      color: var(--blue); font-weight: 600; font-size: .8rem;
     }
-    .alliance-card .tag {
-      display: inline-block; background: var(--gold); color: var(--navy);
-      font-size: .72rem; font-weight: 700; letter-spacing: 1px;
-      text-transform: uppercase; padding: 4px 12px; border-radius: 30px;
-      margin-bottom: 20px;
-    }
-    .alliance-card h3 {
-      font-family: 'Montserrat', sans-serif;
-      font-size: 1.4rem; font-weight: 700; margin-bottom: 16px;
-    }
-    .alliance-card p { color: rgba(255,255,255,.78); line-height: 1.8; font-size: .95rem; }
-    .alliance-pillars {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px;
-    }
-    .pillar {
-      background: rgba(255,255,255,.08); border-radius: 8px;
-      padding: 14px 16px;
-    }
-    .pillar .num { font-family: 'Montserrat', sans-serif; font-size: 1.5rem; font-weight: 700; color: var(--gold); }
-    .pillar .desc { font-size: .78rem; color: rgba(255,255,255,.6); margin-top: 2px; }
+    .service-cta:hover { text-decoration: underline; }
 
     /* ── Customer Service ─────────────────────────────────── */
     .cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin-top: 48px; }
@@ -348,16 +329,16 @@
     /* ── Responsive ───────────────────────────────────────── */
     @media (max-width: 1024px) {
       .team-grid { grid-template-columns: repeat(2, 1fr); }
+      .services-grid { grid-template-columns: repeat(2, 1fr); }
     }
     @media (max-width: 768px) {
       nav { padding: 0 5vw; }
       .nav-links { display: none; flex-direction: column; position: absolute; top: 70px; left: 0; right: 0; background: var(--navy); padding: 24px 5vw; gap: 16px; }
       .nav-links.open { display: flex; }
       .nav-toggle { display: block; }
-      .two-col, .cards-grid, .tech-grid, .travel-tips,
+      .cards-grid, .tech-grid, .travel-tips,
       .portfolio-grid, .contact-grid { grid-template-columns: 1fr; }
       .hero-stats { gap: 32px; }
-      .alliance-pillars { grid-template-columns: 1fr; }
       .team-grid { grid-template-columns: 1fr 1fr; }
     }
     @media (max-width: 480px) {
@@ -448,58 +429,58 @@
 <!-- ── CORPORATE TRAVEL ───────────────────────────────────── -->
 <section id="firemni-cestovani">
   <div class="section-inner">
-    <div class="two-col">
-      <div>
-        <span class="section-tag">Corporate Travel</span>
-        <h2>We optimize the costs of your business trips</h2>
-        <div class="divider"></div>
-        <p class="lead">Thanks to the professional expertise of our travel specialists and long-standing relationships with airlines and other suppliers, we are able to achieve significant savings while maintaining the highest level of comfort.</p>
-        <ul class="feature-list">
-          <li>
-            <div class="icon"><img src="3127251.png" alt="Airlines" style="width:28px;height:28px;" /></div>
-            <div>
-              <h4>Airlines</h4>
-              <p>Premium relationships with leading world carriers ensure competitive rates and booking flexibility.</p>
-            </div>
-          </li>
-          <li>
-            <div class="icon"><img src="3069333.png" alt="Accommodation" style="width:28px;height:28px;" /></div>
-            <div>
-              <h4>Worldwide Accommodation</h4>
-              <p>Contracted hotel rates and corporate benefits at thousands of hotels around the world.</p>
-            </div>
-          </li>
-          <li>
-            <div class="icon"><img src="3127201.png" alt="Ground Transport" style="width:28px;height:28px;" /></div>
-            <div>
-              <h4>Ground Transport</h4>
-              <p>Car rentals, transfers, and ground transport with full itinerary coordination.</p>
-            </div>
-          </li>
-        </ul>
+    <span class="section-tag">Corporate Travel</span>
+    <h2>We optimize the costs of your business trips</h2>
+    <div class="divider"></div>
+    <p class="lead">A comprehensive range of travel services for corporate clients — from flights and accommodation to visas and parking.</p>
+    <div class="services-grid">
+      <div class="service-tile">
+        <div class="service-icon">✈️</div>
+        <h3><a href="https://okletenky.cz/ok-sluzby/ok-letenky/" target="_blank" rel="noopener">Flights</a></h3>
+        <p>Regular and low-cost airlines, individual and group travel with professional 24/7 service.</p>
+        <a href="https://okletenky.cz/ok-sluzby/ok-letenky/" target="_blank" rel="noopener" class="service-cta">Learn more →</a>
       </div>
-      <div class="alliance-card">
-        <div class="tag">Founding member and shareholder</div>
-        <h3>Travel Alliance a.s.</h3>
-        <p>Through a unified travel policy of five travel service providers, we achieve favorable pricing conditions and significant savings in travel costs for our clients.</p>
-        <div class="alliance-pillars">
-          <div class="pillar">
-            <div class="num">5</div>
-            <div class="desc">partner suppliers</div>
-          </div>
-          <div class="pillar">
-            <div class="num">1</div>
-            <div class="desc">unified travel policy</div>
-          </div>
-          <div class="pillar">
-            <div class="num">↓</div>
-            <div class="desc">cost optimization</div>
-          </div>
-          <div class="pillar">
-            <div class="num">✓</div>
-            <div class="desc">shareholder strength</div>
-          </div>
-        </div>
+      <div class="service-tile">
+        <div class="service-icon">🏨</div>
+        <h3><a href="https://okletenky.cz/ok-sluzby/ok-hotely/" target="_blank" rel="noopener">Accommodation</a></h3>
+        <p>All categories of accommodation at unbeatable rates through our extensive global partner hotel network.</p>
+        <a href="https://okletenky.cz/ok-sluzby/ok-hotely/" target="_blank" rel="noopener" class="service-cta">Learn more →</a>
+      </div>
+      <div class="service-tile">
+        <div class="service-icon">🚗</div>
+        <h3><a href="https://okletenky.cz/ok-sluzby/ok-pujcovna-aut/" target="_blank" rel="noopener">Car Rental</a></h3>
+        <p>Cars and vans of all sizes worldwide, delivery to your location, full insurance included.</p>
+        <a href="https://okletenky.cz/ok-sluzby/ok-pujcovna-aut/" target="_blank" rel="noopener" class="service-cta">Learn more →</a>
+      </div>
+      <div class="service-tile">
+        <div class="service-icon">🚂</div>
+        <h3><a href="https://okletenky.cz/ok-sluzby/ok-vlakove-jizdenky/" target="_blank" rel="noopener">Train Tickets</a></h3>
+        <p>Domestic and international rail tickets worldwide, as the main partner of French railway TGV.</p>
+        <a href="https://okletenky.cz/ok-sluzby/ok-vlakove-jizdenky/" target="_blank" rel="noopener" class="service-cta">Learn more →</a>
+      </div>
+      <div class="service-tile">
+        <div class="service-icon">🛡️</div>
+        <h3><a href="https://okletenky.cz/ok-cestovni-pojisteni/" target="_blank" rel="noopener">Insurance</a></h3>
+        <p>Tailored travel and cancellation insurance with reliable partners and full claims assistance.</p>
+        <a href="https://okletenky.cz/ok-cestovni-pojisteni/" target="_blank" rel="noopener" class="service-cta">Learn more →</a>
+      </div>
+      <div class="service-tile">
+        <div class="service-icon">🛂</div>
+        <h3><a href="https://okletenky.cz/ok-viza/" target="_blank" rel="noopener">Visas</a></h3>
+        <p>Business and tourist visas, invitation letters and entry documents for countries worldwide.</p>
+        <a href="https://okletenky.cz/ok-viza/" target="_blank" rel="noopener" class="service-cta">Learn more →</a>
+      </div>
+      <div class="service-tile">
+        <div class="service-icon">🅿️</div>
+        <h3><a href="https://okletenky.cz/ok-parkovani-na-letisti/" target="_blank" rel="noopener">Airport Parking</a></h3>
+        <p>Parking near Václav Havel Airport Prague at preferential rates with online reservation and guaranteed spot.</p>
+        <a href="https://okletenky.cz/ok-parkovani-na-letisti/" target="_blank" rel="noopener" class="service-cta">Learn more →</a>
+      </div>
+      <div class="service-tile">
+        <div class="service-icon">💶</div>
+        <h3><a href="https://okletenky.cz/ok-ostatni-sluzby/" target="_blank" rel="noopener">Travel Compensation</a></h3>
+        <p>Flight delayed? We claim 250–600 EUR compensation from airlines, up to 24 months retroactively.</p>
+        <a href="https://okletenky.cz/ok-ostatni-sluzby/" target="_blank" rel="noopener" class="service-cta">Learn more →</a>
       </div>
     </div>
   </div>
