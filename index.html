@@ -835,22 +835,15 @@
     btn.textContent = 'Odesílám...';
     const f = this;
     try {
-      const res = await fetch('https://formsubmit.co/ajax/jiri.tlaskal@okhotels.cz', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({
-          Jméno: f.name.value,
-          Email: f.email.value,
-          Společnost: f.company.value,
-          'Oblast zájmu': f.topic.value,
-          Zpráva: f.message.value,
-          _cc: 'trejtnarova@okhotels.cz,martinbergercz@gmail.com',
-          _subject: 'Nový dotaz z webu OK TOURS',
-          _captcha: 'false'
-        })
-      });
+      const fd = new FormData();
+      fd.append('name',    f.name.value);
+      fd.append('email',   f.email.value);
+      fd.append('company', f.company.value);
+      fd.append('topic',   f.topic.value);
+      fd.append('message', f.message.value);
+      const res = await fetch('send-mail.php', { method: 'POST', body: fd });
       const data = await res.json();
-      if (data.success === 'true' || data.success === true) {
+      if (data.success === true) {
         msg.style.display = 'block';
         msg.style.background = 'rgba(34,197,94,.15)';
         msg.style.color = '#4ade80';
