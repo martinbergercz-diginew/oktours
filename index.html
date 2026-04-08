@@ -686,12 +686,12 @@
         <div class="portfolio-body">
           <div class="portfolio-tag">Ubytování</div>
           <h3>Naše hotely</h3>
-          <p>Ubytování v plně vybavených apartmánech s možností online rezervace přímo na stránkách hotelů. Tip: dopřejte si pobyt ve střešním apartmánu s velkou terasou a jedinečným výhledem na Prahu.</p>
-          <a href="#kontakt" class="portfolio-link">Zjistit více →</a>
+          <p>Ubytování v plně vybavených apartmánech s možností online rezervace přímo na stránkách hotelů v krásné rezidenční části Prahy.</p>
+          <a href="https://www.okhotels.cz/" target="_blank" rel="noopener" class="portfolio-link">Zjistit více →</a>
         </div>
       </div>
       <div class="portfolio-card">
-        <a href="dlouhodobe-pronajmy.html" class="portfolio-img aparts" style="background:url('hotel_photos/orion.jpg') center/cover no-repeat;text-decoration:none;display:block;"></a>
+        <a href="dlouhodobe-pronajmy.html" class="portfolio-img aparts" style="background:url('11.jpg') center/cover no-repeat;text-decoration:none;display:block;"></a>
         <div class="portfolio-body">
           <div class="portfolio-tag">Luxusní apartmány · Praha</div>
           <h3>Dlouhodobé pronájmy</h3>
@@ -783,21 +783,22 @@
           </div>
         </div>
       </div>
-      <form onsubmit="return false;">
-        <input type="text" placeholder="Vaše jméno a příjmení" required />
-        <input type="email" placeholder="Firemní e-mail" required />
-        <input type="text" placeholder="Název společnosti" />
-        <select>
+      <form id="contactForm">
+        <input type="text" name="name" placeholder="Vaše jméno a příjmení" required />
+        <input type="email" name="email" placeholder="Firemní e-mail" required />
+        <input type="text" name="company" placeholder="Název společnosti" />
+        <select name="topic">
           <option value="" disabled selected>Oblast zájmu</option>
           <option>Firemní cestování</option>
           <option>Key Account Management</option>
           <option>Technologická řešení</option>
           <option>OK Hotels</option>
-          <option>Residence Sibelius</option>
+          <option>Dlouhodobé pronájmy</option>
           <option>Jiné</option>
         </select>
-        <textarea placeholder="Váš dotaz nebo popis potřeb..."></textarea>
-        <button type="submit">Odeslat dotaz ✈</button>
+        <textarea name="message" placeholder="Váš dotaz nebo popis potřeb..."></textarea>
+        <button type="submit" id="contactSubmit">Odeslat dotaz ✈</button>
+        <p id="contactMsg" style="display:none;padding:12px 16px;border-radius:8px;font-weight:600;text-align:center;"></p>
       </form>
     </div>
   </div>
@@ -823,6 +824,36 @@
   // Sticky nav shrink
   window.addEventListener('scroll', () => {
     document.getElementById('navbar').style.height = window.scrollY > 60 ? '58px' : '70px';
+  });
+
+  // Contact form
+  document.getElementById('contactForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('contactSubmit');
+    const msg = document.getElementById('contactMsg');
+    btn.disabled = true;
+    btn.textContent = 'Odesílám...';
+    try {
+      const res = await fetch('send-mail.php', { method: 'POST', body: new FormData(this) });
+      const data = await res.json();
+      if (data.success) {
+        msg.style.display = 'block';
+        msg.style.background = 'rgba(34,197,94,.15)';
+        msg.style.color = '#4ade80';
+        msg.textContent = 'Dotaz byl úspěšně odeslán. Ozveme se vám co nejdříve.';
+        this.reset();
+        btn.textContent = 'Odesláno ✓';
+      } else {
+        throw new Error();
+      }
+    } catch {
+      msg.style.display = 'block';
+      msg.style.background = 'rgba(239,68,68,.15)';
+      msg.style.color = '#f87171';
+      msg.textContent = 'Nepodařilo se odeslat dotaz. Zkuste to prosím znovu nebo nás kontaktujte na info@oktours.cz.';
+      btn.disabled = false;
+      btn.textContent = 'Odeslat dotaz ✈';
+    }
   });
 
   // Fade-in on scroll
