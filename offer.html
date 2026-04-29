@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OK TOURS – Nabídka nového webu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #334155;
+      background: #f8fafc;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Layout ─────────────────────────────────────── */
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ── Header ─────────────────────────────────────── */
+    .header {
+      background: #fff;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 32px 0;
+      margin-bottom: 48px;
+    }
+    .header .container {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .header img {
+      height: 40px;
+      width: auto;
+    }
+    .header h1 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #0f172a;
+      letter-spacing: -0.01em;
+    }
+
+    /* ── Intro Card ─────────────────────────────────── */
+    .intro {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 40px;
+      margin-bottom: 48px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .intro p {
+      margin-bottom: 16px;
+      font-size: 1rem;
+      color: #475569;
+    }
+    .intro p:last-child {
+      margin-bottom: 0;
+    }
+    .intro .greeting {
+      font-size: 1.05rem;
+      color: #0f172a;
+      font-weight: 500;
+    }
+    .intro .contact {
+      background: #f1f5f9;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-top: 20px;
+      font-size: 0.9rem;
+      color: #64748b;
+    }
+    .intro .contact a {
+      color: #2563eb;
+      text-decoration: none;
+    }
+    .intro .contact a:hover {
+      text-decoration: underline;
+    }
+    .intro .signature {
+      margin-top: 24px;
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    /* ── Section heading ────────────────────────────── */
+    .sections-heading {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #94a3b8;
+      margin-bottom: 20px;
+    }
+
+    /* ── Checklist Section ──────────────────────────── */
+    .section {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      overflow: hidden;
+      transition: box-shadow 0.2s, border-color 0.2s;
+    }
+    .section:nth-child(odd)  { background: #fffbf0; border-color: #f0e6cc; }
+    .section:nth-child(even) { background: #f0f7ff; border-color: #cce0f5; }
+    .section:hover {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .section.checked {
+      border-color: #d1d5db;
+      opacity: 0.6;
+    }
+    .section.checked:hover {
+      opacity: 0.8;
+    }
+    .section.checked .section-header h2 {
+      text-decoration: line-through;
+      color: #94a3b8;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 20px 24px;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .section-header .checkbox {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      border: 2px solid #cbd5e1;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      background: #fff;
+    }
+    .section.checked .checkbox {
+      background: #22c55e;
+      border-color: #22c55e;
+    }
+    .section.checked .checkbox::after {
+      content: '';
+      width: 6px;
+      height: 10px;
+      border: solid #fff;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+      margin-top: -2px;
+    }
+
+    .section-header h2 {
+      flex: 1;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1e293b;
+      transition: color 0.2s;
+    }
+
+    .section-header .chevron {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      color: #94a3b8;
+      transition: transform 0.25s ease;
+    }
+    .section.open .section-header .chevron {
+      transform: rotate(180deg);
+    }
+
+    .section-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease;
+    }
+    .section.open .section-body {
+      max-height: 800px;
+    }
+
+    .section-content {
+      padding: 0 24px 24px 60px;
+      font-size: 0.95rem;
+      color: #64748b;
+      line-height: 1.8;
+    }
+    .section-content p {
+      margin-bottom: 12px;
+    }
+    .section-content p:last-child {
+      margin-bottom: 0;
+    }
+    .section-content img {
+      width: 100%;
+      border-radius: 8px;
+      margin-top: 12px;
+      border: 1px solid #e2e8f0;
+    }
+    .section-content ul {
+      padding-left: 20px;
+      margin-bottom: 12px;
+    }
+    .section-content li {
+      margin-bottom: 6px;
+    }
+
+    /* ── Progress bar ───────────────────────────────── */
+    .progress-bar {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 32px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .progress-bar .track {
+      flex: 1;
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .progress-bar .fill {
+      height: 100%;
+      background: #22c55e;
+      border-radius: 4px;
+      transition: width 0.4s ease;
+      width: 0%;
+    }
+    .progress-bar .label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #64748b;
+      white-space: nowrap;
+    }
+
+    /* ── Footer ─────────────────────────────────────── */
+    .footer {
+      text-align: center;
+      padding: 48px 0 32px;
+      color: #94a3b8;
+      font-size: 0.8rem;
+    }
+
+    /* ── Placeholder images ─────────────────────────── */
+    .img-placeholder {
+      width: 100%;
+      height: 200px;
+      background: linear-gradient(135deg, #e2e8f0, #f1f5f9);
+      border-radius: 8px;
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #94a3b8;
+      font-size: 0.85rem;
+      border: 1px solid #e2e8f0;
+    }
+
+    /* ── Responsive ─────────────────────────────────── */
+    @media (max-width: 600px) {
+      .intro { padding: 28px 20px; }
+      .section-header { padding: 16px 18px; }
+      .section-content { padding: 0 18px 18px 50px; }
+      .container { padding: 0 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="container">
+      <img src="logo.svg" alt="OK TOURS" />
+      <h1>Nabídka nového webu</h1>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- Intro -->
+    <div class="intro">
+      <p class="greeting">Milé OK TOURS,</p>
+      <p>gratuluji k rozhodnutí se pustit do nového webu, posílám vám krátké povídání o tom, jak vše dovést do zdárného konce.</p>
+      <div class="contact">
+        Kontakt: <a href="mailto:martinberger@gmail.com">martinberger@gmail.com</a> nebo <a href="tel:+420603114502">603 114 502</a>
+      </div>
+      <p class="signature">Martin</p>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-bar">
+      <span class="label"><span id="progressCount">0</span> / <span id="progressTotal">7</span></span>
+      <div class="track"><div class="fill" id="progressFill"></div></div>
+    </div>
+
+    <!-- Sections heading -->
+    <div class="sections-heading">Co od vás budeme potřebovat</div>
+
+    <!-- Section 1 -->
+    <div class="section open" data-id="section-1">
+      <div class="section-header" onclick="toggleSection(this)">
+        <div class="checkbox"></div>
+        <h2>Schválení rozpočtu</h2>
+        <svg class="chevron" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+      </div>
+      <div class="section-body">
+        <div class="section-content">
+          <p>Rozpočet na web je <strong>25.000 Kč bez DPH</strong> a zahrnuje:</p>
+          <ul>
+            <li>Grafika</li>
+            <li>Vytvoření webu</li>
+            <li>Zprovoznění formuláře</li>
+            <li>Vytvoření testovací a produkční verze</li>
+            <li>Korektury</li>
+            <li>Nastavení Google Analytics a SEO a zaškolení do GA, abyste se mohli dívat na reporty</li>
+            <li>Nastavení hostingu</li>
+          </ul>
+          <p>Měsíční paušál <strong>1.000 Kč bez DPH</strong></p>
+          <ul>
+            <li>Zahrnuje hosting, úpravy do 1 hodiny měsíčně</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2 -->
+    <div class="section open" data-id="section-2">
+      <div class="section-header" onclick="toggleSection(this)">
+        <div class="checkbox"></div>
+        <h2>Google Analytics</h2>
+        <svg class="chevron" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+      </div>
+      <div class="section-body">
+        <div class="section-content">
+          <ul>
+            <li>Potřebuji buď přístup do současných Google Analytics, nebo pokyn k tomu je založit a nastavit</li>
+            <li>V druhém případě potřebuji e-mail nebo e-maily lidí, kteří do nich mají mít přístup</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3 -->
+    <div class="section open" data-id="section-3">
+      <div class="section-header" onclick="toggleSection(this)">
+        <div class="checkbox"></div>
+        <h2>Kontaktní formulář</h2>
+        <svg class="chevron" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+      </div>
+      <div class="section-body">
+        <div class="section-content">
+          <ul>
+            <li>Na jaký e-mail má formulář chodit?</li>
+            <li>Chceme zavést captchu? (ochrana proti robotům, může lehce znepříjemnit život i lidem)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4 -->
+    <div class="section open" data-id="section-4">
+      <div class="section-header" onclick="toggleSection(this)">
+        <div class="checkbox"></div>
+        <h2>Varianta webu</h2>
+        <svg class="chevron" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+      </div>
+      <div class="section-body">
+        <div class="section-content">
+          <ul>
+            <li>Líbí se více <a href="https://dev.signi.com/prototypes/ok-tours/" target="_blank" style="color:#2563eb;text-decoration:underline;">tmavá varianta</a> nebo <a href="https://dev.signi.com/prototypes/ok-tours/index-light.html" target="_blank" style="color:#2563eb;text-decoration:underline;">světlá varianta</a>?</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 5 -->
+    <div class="section open" data-id="section-5">
+      <div class="section-header" onclick="toggleSection(this)">
+        <div class="checkbox"></div>
+        <h2>Texty</h2>
+        <svg class="chevron" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+      </div>
+      <div class="section-body">
+        <div class="section-content">
+          <ul>
+            <li>Projděte texty a pošlete případné korektury, klidně ve Wordu nebo v jakékoli jiné formě</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 6 -->
+    <div class="section open" data-id="section-6">
+      <div class="section-header" onclick="toggleSection(this)">
+        <div class="checkbox"></div>
+        <h2>Linky</h2>
+        <svg class="chevron" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+      </div>
+      <div class="section-body">
+        <div class="section-content">
+          <img src="img-pred-odjezdem.png" alt="Sekce Před odjezdem" />
+          <ul>
+            <li>V sekci „Před odjezdem" jsou karty s odkazy (Cestovní doklady, Bezpečnostní situace, Zdraví & pojištění, atd.). Kam mají tyto linky vést?</li>
+            <li>Pošlete prosím URL adresy pro každou kartu</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 7 -->
+    <div class="section open" data-id="section-7">
+      <div class="section-header" onclick="toggleSection(this)">
+        <div class="checkbox"></div>
+        <h2>Fotky a jména lidí do „O nás"</h2>
+        <svg class="chevron" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+      </div>
+      <div class="section-body">
+        <div class="section-content">
+          <img src="img-o-nas.png" alt="Sekce O nás" />
+          <p>Pro sekci „Poznejte náš tým" potřebujeme za každého člena týmu:</p>
+          <ul>
+            <li>Jméno a příjmení</li>
+            <li>Pozice (např. Ředitel / CEO, Key Account Manager, …)</li>
+            <li>Fotografie (ideálně portrét, min. 400x400 px)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 8 -->
+    <div class="section open" data-id="section-8">
+      <div class="section-header" onclick="toggleSection(this)">
+        <div class="checkbox"></div>
+        <h2>Fotky do sekce „Další služby"</h2>
+        <svg class="chevron" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+      </div>
+      <div class="section-body">
+        <div class="section-content">
+          <img src="img-dalsi-sluzby.png" alt="Sekce Další služby" />
+          <p>Do boxů OK Hotels a Residence Sibelius potřebujeme fotografie — ideálně víc, ať si může klient proklikat.</p>
+          <ul>
+            <li>Fotky hotelů (exteriér, interiér, pokoje)</li>
+            <li>Fotky Residence Sibelius (apartmány, společné prostory)</li>
+            <li>Kam povedou linky „Zjistit více"?</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 9 -->
+    <div class="section open" data-id="section-9">
+      <div class="section-header" onclick="toggleSection(this)">
+        <div class="checkbox"></div>
+        <h2>Ostatní weby</h2>
+        <svg class="chevron" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+      </div>
+      <div class="section-body">
+        <div class="section-content">
+          <ul>
+            <li>Budete chtít vyrobit i jiné weby ve stejné grafice? Například Sibelius nebo nějaké jiné?</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 10 -->
+    <div class="section open" data-id="section-10">
+      <div class="section-header" onclick="toggleSection(this)">
+        <div class="checkbox"></div>
+        <h2>Kontakty</h2>
+        <svg class="chevron" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+      </div>
+      <div class="section-body">
+        <div class="section-content">
+          <img src="img-kontakty.png" alt="Sekce Kontakty" />
+          <ul>
+            <li>E-mail</li>
+            <li>Telefon</li>
+            <li>Adresa sídla</li>
+            <li>Provozní doba</li>
+            <li>Kam povede link „Travel Alliance a.s."? Má vlastní web?</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 11 -->
+    <div class="section open" data-id="section-11">
+      <div class="section-header" onclick="toggleSection(this)">
+        <div class="checkbox"></div>
+        <h2>Hosting</h2>
+        <svg class="chevron" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+      </div>
+      <div class="section-body">
+        <div class="section-content">
+          <ul>
+            <li>Kde má web bydlet? Navrhuji <a href="https://www.hetzner.com/" target="_blank" style="color:#2563eb;text-decoration:underline;">Hetzner</a></li>
+            <li>Chcete si hosting (VPS) založit, nebo to mám udělat já?</li>
+            <li>Cena je pár korun, klidně to můžeme zahrnout do paušálu</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <div class="container">OK TOURS &middot; Nabídka nového webu</div>
+  </div>
+
+  <script>
+    const API_URL = 'offer-api.php';
+    let state = {};
+
+    // Load state from server
+    async function loadState() {
+      try {
+        const res = await fetch(API_URL);
+        state = await res.json();
+        applyState();
+      } catch (e) {
+        console.warn('Could not load state, using defaults');
+      }
+    }
+
+    // Apply state to DOM
+    function applyState() {
+      document.querySelectorAll('.section').forEach(section => {
+        const id = section.dataset.id;
+        if (state[id]) {
+          section.classList.add('checked');
+          section.classList.remove('open');
+        } else {
+          section.classList.remove('checked');
+        }
+      });
+      updateProgress();
+    }
+
+    // Save single checkbox state to server
+    async function saveState(id, checked) {
+      try {
+        await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, checked })
+        });
+      } catch (e) {
+        console.warn('Could not save state');
+      }
+    }
+
+    // Toggle section: click on header
+    function toggleSection(header) {
+      const section = header.closest('.section');
+      const id = section.dataset.id;
+      const checkbox = header.querySelector('.checkbox');
+
+      // If clicking on the checkbox area (left 50px), toggle checked state
+      // Otherwise toggle open/close
+      // We detect by checking click target proximity
+    }
+
+    // Separate handlers for checkbox vs expand/collapse
+    document.addEventListener('DOMContentLoaded', () => {
+      // Remove inline onclick, use event delegation
+      document.querySelectorAll('.section-header').forEach(header => {
+        header.removeAttribute('onclick');
+
+        header.addEventListener('click', (e) => {
+          const section = header.closest('.section');
+          const id = section.dataset.id;
+          const checkboxEl = header.querySelector('.checkbox');
+          const checkboxRect = checkboxEl.getBoundingClientRect();
+
+          // Check if click was on or near the checkbox (within 40px of its center)
+          const clickX = e.clientX;
+          const checkboxCenterX = checkboxRect.left + checkboxRect.width / 2;
+
+          if (Math.abs(clickX - checkboxCenterX) < 30) {
+            // Toggle checked
+            const isChecked = section.classList.toggle('checked');
+            if (isChecked) {
+              section.classList.remove('open');
+            } else {
+              section.classList.add('open');
+            }
+            state[id] = isChecked;
+            saveState(id, isChecked);
+            updateProgress();
+          } else {
+            // Toggle open/close (only if not checked)
+            if (!section.classList.contains('checked')) {
+              section.classList.toggle('open');
+            } else {
+              // Uncheck and open
+              section.classList.remove('checked');
+              section.classList.add('open');
+              state[id] = false;
+              saveState(id, false);
+              updateProgress();
+            }
+          }
+        });
+      });
+
+      loadState();
+    });
+
+    function updateProgress() {
+      const total = document.querySelectorAll('.section').length;
+      const checked = document.querySelectorAll('.section.checked').length;
+      document.getElementById('progressCount').textContent = checked;
+      document.getElementById('progressTotal').textContent = total;
+      document.getElementById('progressFill').style.width = (total > 0 ? (checked / total) * 100 : 0) + '%';
+    }
+  </script>
+
+</body>
+</html>
