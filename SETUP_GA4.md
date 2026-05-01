@@ -2,7 +2,19 @@
 
 **For: a future Claude session that picks this up after the cutover from `oktours.diginew.cz` → `oktours.cz` is complete.**
 
-This document explains everything needed to add Google Analytics 4 (GA4) tracking to the OK TOURS website. It assumes the human (Martin) has already created the GA4 property in the Google Analytics web UI and has the **Measurement ID** (`G-XXXXXXXXXX`) ready to paste.
+---
+
+## Values to use (already provisioned)
+
+| Variable | Value | Notes |
+|---|---|---|
+| **Measurement ID** | `G-YFBKZHVLZ3` | Property already created in Google Analytics. Paste this everywhere this guide says `G-XXXXXXXXXX`. |
+
+The GA4 property at `analytics.google.com` is already set up (Part 1 below was already done). Skip Part 1 — go straight to **Part 2**.
+
+---
+
+This document explains everything needed to add Google Analytics 4 (GA4) tracking to the OK TOURS website.
 
 The plan is: GA4 + Google **Consent Mode v2** + a lightweight cookie banner ([Klaro!](https://klaro.kiprotect.com/)). This is the GDPR-compliant path required for EU traffic since March 2024.
 
