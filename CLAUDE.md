@@ -1,30 +1,43 @@
 # ok-tours
 
-**Live URL:** https://dev.signi.com/prototypes/ok-tours/
-**English version:** https://dev.signi.com/prototypes/ok-tours/index-en.html
+**Live URL (temporary):** https://oktours.diginew.cz/
+**English version:** https://oktours.diginew.cz/index-en.html
+**Future URL (after client approval):** https://oktours.cz/
 **Part of:** `martinbergercz-diginew/prototypes` monorepo
 
 ---
 
 ## What is OK Tours?
 
-Static HTML prototype for OK Tours corporate travel website.
+Static HTML site for OK Tours corporate travel agency. Has Czech + English language versions, a subpage for long-term rentals (`dlouhodobe-pronajmy.html`), 5 legal PDFs in `docs/`, and a PHP-backed contact form (`send-mail.php`) that sends to `jiri.tlaskal@okhotels.cz` and `trejtnarova@okhotels.cz` via the server's local Postfix.
 
 ---
 
 ## Tech Stack
 - Static HTML + CSS (no build step, no React, no Vite)
-- Images: `image.png`, `logo_w.png`, `logo.svg`
+- One PHP file: `send-mail.php` (contact form handler, uses `mail()` via Postfix)
+- Caddy v2 + PHP-FPM 8.3 + Postfix on the server
+- Images: `image.png`, `logo_w.png`, `logo.svg`, hotel photos in `hotel_photos/`, legal logos in `logos/`
 
 ---
 
 ## Files
-- `index.html` — main Czech version (dark theme)
-- `index-en.html` — English version
-- `image.png` — hero image
-- `logo_w.png` — white logo (PNG)
-- `logo.svg` — logo (SVG)
-- `3127251.png`, `3069333.png`, `3127201.png` — section icons
+
+### Public (deployed)
+- `index.html` — Czech homepage
+- `index-en.html` — English homepage
+- `dlouhodobe-pronajmy.html` — long-term rentals subpage
+- `send-mail.php` — contact form handler
+- `docs/*.pdf` — 5 legal PDFs (obchodní podmínky, GDPR, pojistka, IATA, koncesní listina)
+- `logos/ack-cr.png`, `logos/iata.png` — footer association logos
+- `hotel_photos/*.jpg` — carousel images
+- Misc PNGs (icons, hero images)
+
+### Internal (NOT deployed to production)
+- `offer.html` — internal client checklist
+- `index-v1.html` — old version reference
+- `CLAUDE.md` — this file
+- `.claude/`, `offer-state.json`
 
 ---
 
@@ -45,20 +58,46 @@ Work directly on `main`. No feature branches needed for routine changes.
 
 ---
 
-## Deploying to VPS (dev.signi.com)
+## Deploying to production VPS (Hetzner)
 
-This is a static HTML project — no build step needed. Just rsync the files directly.
+Production server: **`77.42.39.133`** (Hetzner CX22, Helsinki, Ubuntu 24.04, hostname `oktours-prod`).
+Stack: Caddy + PHP-FPM 8.3 + Postfix. Files served from `/var/www/oktours/`.
 
 ### Quick deploy (one-liner)
 
 Run from the `ok-tours/` directory:
 
 ```bash
-rsync -avz --delete --exclude='.DS_Store' --exclude='CLAUDE.md' --exclude='.claude' --exclude='offer-state.json' . root@dev.signi.com:/var/www/dev/prototypes/ok-tours/
+rsync -avz --delete \
+  --exclude='.DS_Store' \
+  --exclude='.claude' \
+  --exclude='.last-deploy-marker' \
+  --exclude='CLAUDE.md' \
+  --exclude='offer.html' \
+  --exclude='offer-api.php' \
+  --exclude='offer-state.json' \
+  --exclude='index-v1.html' \
+  ./ root@77.42.39.133:/var/www/oktours/ && \
+ssh root@77.42.39.133 "chown -R caddy:caddy /var/www/oktours"
 ```
 
 ### Important notes
 - No build step — files are served as-is
-- SSH access to `root@dev.signi.com` is required
-- No server config changes needed — Caddy serves static files automatically
-- The `--exclude='CLAUDE.md'` prevents uploading this file to the server
+- SSH access to `root@77.42.39.133` requires the `~/.ssh/id_ed25519` key (already authorized)
+- The `chown` is needed because rsync runs as `root` but Caddy reads as the `caddy` user
+- Caddy auto-renews TLS via Let's Encrypt; no cert maintenance needed
+- DNS: `oktours.diginew.cz` (web4u, A record at the registrar) → `77.42.39.133`. After client approval, point `oktours.cz` here too.
+- The contact form uses local Postfix (`mail()`); deliverability is not great until SPF/DKIM are added or we relay through the client's SMTP. Currently watch the spam folder when testing.
+
+### Server admin
+
+```bash
+# Reload Caddy after Caddyfile changes
+ssh root@77.42.39.133 "caddy validate --config /etc/caddy/Caddyfile && systemctl reload caddy"
+
+# Check mail queue / delivery
+ssh root@77.42.39.133 "mailq && tail -50 /var/log/mail.log"
+
+# Caddy access log
+ssh root@77.42.39.133 "tail -50 /var/log/caddy/access.log"
+```
