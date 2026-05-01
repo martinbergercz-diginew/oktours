@@ -1,0 +1,8 @@
+User-agent: *
+Disallow: /offer.html
+Disallow: /offer-api.php
+Disallow: /send-mail.php
+Disallow: /index-v1.html
+Allow: /docs/
+
+Sitemap: https://oktours.diginew.cz/sitemap.xml

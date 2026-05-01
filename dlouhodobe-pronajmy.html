@@ -3,8 +3,69 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dlouhodobé pronájmy – OK TOURS, a.s.</title>
+
+  <!-- TEMPORARY (staging on oktours.diginew.cz). Remove at cutover to oktours.cz. -->
+  <meta name="robots" content="noindex, nofollow" />
+
+  <title>Dlouhodobé pronájmy apartmánů Praha | OK TOURS</title>
+  <meta name="description" content="Dlouhodobé firemní pronájmy plně vybavených apartmánů v Praze. Flexibilní podmínky, kompletní servis OK TOURS pro expaty a manažery." />
+  <link rel="canonical" href="https://oktours.diginew.cz/dlouhodobe-pronajmy.html" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="OK TOURS, a.s." />
+  <meta property="og:locale" content="cs_CZ" />
+  <meta property="og:title" content="Dlouhodobé pronájmy apartmánů Praha" />
+  <meta property="og:description" content="Plně vybavené apartmány na Královských Vinohradech a v centru Prahy. Flexibilní pronájem, kompletní servis." />
+  <meta property="og:url" content="https://oktours.diginew.cz/dlouhodobe-pronajmy.html" />
+  <meta property="og:image" content="https://oktours.diginew.cz/og-image.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="OK TOURS – Dlouhodobé pronájmy apartmánů Praha" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Dlouhodobé pronájmy apartmánů Praha | OK TOURS" />
+  <meta name="twitter:description" content="Plně vybavené apartmány v centru Prahy. Flexibilní pronájem, kompletní servis." />
+  <meta name="twitter:image" content="https://oktours.diginew.cz/og-image.jpg" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+  <!-- Preconnect to Google Fonts (perf) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Schema.org JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "OK TOURS", "item": "https://oktours.diginew.cz/" },
+          { "@type": "ListItem", "position": 2, "name": "Dlouhodobé pronájmy", "item": "https://oktours.diginew.cz/dlouhodobe-pronajmy.html" }
+        ]
+      },
+      {
+        "@type": "Service",
+        "name": "Dlouhodobé pronájmy apartmánů",
+        "serviceType": "Long-term apartment rental",
+        "areaServed": { "@type": "City", "name": "Praha" },
+        "provider": {
+          "@type": "TravelAgency",
+          "@id": "https://oktours.diginew.cz/#org",
+          "name": "OK TOURS, a.s.",
+          "url": "https://oktours.diginew.cz/"
+        }
+      }
+    ]
+  }
+  </script>
+
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; font-size: 16px; }
@@ -286,7 +347,7 @@
 <!-- ── FOOTER ── -->
 <footer>
   <div style="margin-bottom:16px">
-    <img src="logo_w.png" alt="OK TOURS" style="height:28px;margin:0 auto;opacity:.7;" />
+    <img src="logo_w.png" alt="OK TOURS" style="height:28px;margin:0 auto;opacity:.7;" loading="lazy" decoding="async" />
   </div>
   <p>© 2026 <strong style="color:rgba(255,255,255,.6)">OK TOURS, a.s.</strong> · Všechna práva vyhrazena · <a href="index.html">Zpět na hlavní stránku</a></p>
 </footer>

@@ -37,6 +37,7 @@ Static HTML site for OK Tours corporate travel agency. Has Czech + English langu
 - `offer.html` — internal client checklist
 - `index-v1.html` — old version reference
 - `CLAUDE.md` — this file
+- `SETUP_GA4.md` — instructions for the next Claude session that wires up Google Analytics
 - `.claude/`, `offer-state.json`
 
 ---
@@ -73,6 +74,7 @@ rsync -avz --delete \
   --exclude='.claude' \
   --exclude='.last-deploy-marker' \
   --exclude='CLAUDE.md' \
+  --exclude='SETUP_GA4.md' \
   --exclude='offer.html' \
   --exclude='offer-api.php' \
   --exclude='offer-state.json' \
@@ -101,3 +103,34 @@ ssh root@77.42.39.133 "mailq && tail -50 /var/log/mail.log"
 # Caddy access log
 ssh root@77.42.39.133 "tail -50 /var/log/caddy/access.log"
 ```
+
+---
+
+## Cutover from `oktours.diginew.cz` → `oktours.cz` (when client approves)
+
+The site currently uses the staging domain in all SEO meta, canonical links, og:url, sitemap, JSON-LD `@id`s, and `robots.txt`. There's also a temporary `<meta name="robots" content="noindex, nofollow">` on every page so Google doesn't index the staging copy.
+
+When ready to cut over:
+
+1. **Replace all references to the staging domain** (one find-and-replace across the whole `ok-tours/` directory):
+
+   ```bash
+   cd /Users/martinberger/Documents/Prototypes/prototypes/ok-tours/
+   grep -rl "oktours.diginew.cz" . | xargs sed -i '' 's|oktours\.diginew\.cz|oktours.cz|g'
+   ```
+
+   Verify zero matches remain: `grep -r "diginew.cz" .` should be empty.
+
+2. **Remove the noindex meta tag** from `index.html`, `index-en.html`, `dlouhodobe-pronajmy.html`. Search for the marker comment `<!-- TEMPORARY (staging on oktours.diginew.cz)` and delete the marker + the `<meta name="robots">` line beneath it (3 occurrences total).
+
+3. **Update the Caddyfile on the server** to add `oktours.cz` (and ideally `www.oktours.cz`) as the site name; keep `oktours.diginew.cz` as an alias for at least 2 weeks as a safety net (Caddy will then issue certs for both names automatically).
+
+4. **Flip DNS for `oktours.cz`** at the registrar to `77.42.39.133`. Lower the TTL to 300 at least 24h before the change to avoid stale caches.
+
+5. **Verify SPF/MX records on `oktours.cz` are NOT touched** — the client's email is on that domain. Only A and AAAA records change.
+
+6. **Set up Google Search Console** for `oktours.cz` (DNS TXT verification — cleanest), submit `sitemap.xml`.
+
+7. **Then run the GA4 setup** — see `SETUP_GA4.md`.
+
+8. **After 2 weeks of stable traffic on the new domain**, remove `oktours.diginew.cz` from the Caddyfile and from DNS.

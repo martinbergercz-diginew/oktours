@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex" />
+  <title>Stránka nenalezena – OK TOURS</title>
+  <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Open+Sans:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --navy:  #0a1f44;
+      --gold:  #c9a84c;
+      --muted: rgba(255,255,255,.65);
+    }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Open Sans', sans-serif;
+      background: linear-gradient(135deg, var(--navy) 0%, #1a3a7a 100%);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 5vw;
+    }
+    .panel { max-width: 560px; text-align: center; }
+    .panel img { height: 48px; margin: 0 auto 32px; opacity: .9; }
+    .code {
+      font-family: 'Montserrat', sans-serif;
+      font-size: clamp(80px, 14vw, 140px);
+      font-weight: 700;
+      color: var(--gold);
+      line-height: 1;
+      letter-spacing: -2px;
+    }
+    h1 {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 600;
+      font-size: clamp(20px, 3vw, 28px);
+      margin-top: 16px;
+      margin-bottom: 8px;
+    }
+    h2 {
+      font-family: 'Open Sans', sans-serif;
+      font-weight: 400;
+      font-size: 1rem;
+      color: var(--muted);
+      margin-bottom: 32px;
+    }
+    .links { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+    .links a {
+      display: inline-block;
+      padding: 12px 28px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: .9rem;
+      transition: all .2s ease;
+    }
+    .links a.primary {
+      background: var(--gold);
+      color: var(--navy);
+    }
+    .links a.primary:hover { background: #d9b85c; transform: translateY(-1px); }
+    .links a.secondary {
+      color: var(--muted);
+      border: 1px solid rgba(255,255,255,.25);
+    }
+    .links a.secondary:hover { color: #fff; border-color: rgba(255,255,255,.5); }
+  </style>
+</head>
+<body>
+  <main class="panel">
+    <img src="/logo_w.png" alt="OK TOURS" />
+    <div class="code">404</div>
+    <h1>Stránka nenalezena</h1>
+    <h2>Page not found</h2>
+    <div class="links">
+      <a href="/" class="primary">Zpět na úvod</a>
+      <a href="/index-en.html" class="secondary">Back to homepage</a>
+    </div>
+  </main>
+</body>
+</html>

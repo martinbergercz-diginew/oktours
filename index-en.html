@@ -3,8 +3,125 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OK TOURS, a.s. – World-Class Corporate Travel</title>
+
+  <!-- TEMPORARY (staging on oktours.diginew.cz). Remove at cutover to oktours.cz. -->
+  <meta name="robots" content="noindex, nofollow" />
+
+  <title>OK TOURS – Corporate Travel Agency | Prague &amp; Ostrava</title>
+  <meta name="description" content="OK TOURS, a.s. – Czech corporate travel agency for business trips, flights, hotels and MICE events. 35 years of experience, offices in Prague and Ostrava." />
+  <link rel="canonical" href="https://oktours.diginew.cz/index-en.html" />
+
+  <!-- Hreflang -->
+  <link rel="alternate" hreflang="cs" href="https://oktours.diginew.cz/" />
+  <link rel="alternate" hreflang="en" href="https://oktours.diginew.cz/index-en.html" />
+  <link rel="alternate" hreflang="x-default" href="https://oktours.diginew.cz/" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="OK TOURS, a.s." />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:locale:alternate" content="cs_CZ" />
+  <meta property="og:title" content="OK TOURS – Corporate Travel Agency" />
+  <meta property="og:description" content="Czech corporate travel agency for business trips, flights, hotels and MICE events." />
+  <meta property="og:url" content="https://oktours.diginew.cz/index-en.html" />
+  <meta property="og:image" content="https://oktours.diginew.cz/og-image.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="OK TOURS – World-Class Corporate Travel" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="OK TOURS – Corporate Travel Agency" />
+  <meta name="twitter:description" content="35 years of experience. Business trips, flights, hotels and MICE events from Prague and Ostrava." />
+  <meta name="twitter:image" content="https://oktours.diginew.cz/og-image.jpg" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+  <!-- Preconnect to Google Fonts (perf) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Schema.org JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "TravelAgency",
+        "@id": "https://oktours.diginew.cz/#org",
+        "name": "OK TOURS, a.s.",
+        "url": "https://oktours.diginew.cz/",
+        "logo": "https://oktours.diginew.cz/logo.svg",
+        "image": "https://oktours.diginew.cz/og-image.jpg",
+        "description": "Czech corporate travel agency – flights, hotels, MICE and full business-trip support. 35 years of experience.",
+        "email": "info@oktours.cz",
+        "telephone": "+420 222 521 700",
+        "vatID": "CZ699003191",
+        "taxID": "00563391",
+        "sameAs": [
+          "http://www.travelalliance.cz/",
+          "https://www.okhotels.cz/",
+          "https://www.hotelorionprague.cz/"
+        ],
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Jana Masaryka 194/39",
+          "postalCode": "120 00",
+          "addressLocality": "Prague",
+          "addressCountry": "CZ"
+        }
+      },
+      {
+        "@type": "LocalBusiness",
+        "@id": "https://oktours.diginew.cz/#praha",
+        "name": "OK TOURS – Prague office",
+        "parentOrganization": { "@id": "https://oktours.diginew.cz/#org" },
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Jana Masaryka 194/39",
+          "postalCode": "120 00",
+          "addressLocality": "Prague",
+          "addressCountry": "CZ"
+        },
+        "telephone": "+420 222 521 700",
+        "email": "info@oktours.cz",
+        "openingHoursSpecification": {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"],
+          "opens": "08:00",
+          "closes": "18:00"
+        }
+      },
+      {
+        "@type": "LocalBusiness",
+        "@id": "https://oktours.diginew.cz/#ostrava",
+        "name": "OK TOURS – Ostrava office",
+        "parentOrganization": { "@id": "https://oktours.diginew.cz/#org" },
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Jurečkova 1811/18",
+          "postalCode": "702 00",
+          "addressLocality": "Ostrava",
+          "addressCountry": "CZ"
+        },
+        "telephone": "+420 596 117 113",
+        "email": "ostrava@oktours.cz"
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://oktours.diginew.cz/#website",
+        "url": "https://oktours.diginew.cz/",
+        "name": "OK TOURS",
+        "publisher": { "@id": "https://oktours.diginew.cz/#org" },
+        "inLanguage": "en"
+      }
+    ]
+  }
+  </script>
+
   <style>
     /* ── Reset & Base ─────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -822,13 +939,13 @@
 <!-- ── FOOTER ──────────────────────────────────────────────── -->
 <footer>
   <div style="margin-bottom:16px">
-    <img src="logo_w.png" alt="OK TOURS" style="height:28px;margin:0 auto;opacity:.7;" />
+    <img src="logo_w.png" alt="OK TOURS" style="height:28px;margin:0 auto;opacity:.7;" loading="lazy" decoding="async" />
   </div>
   <p>© 2026 <strong style="color:rgba(255,255,255,.6)">OK TOURS, a.s.</strong> · All rights reserved · <a href="#hero">Back to top ↑</a></p>
   <p style="margin-top:8px">Member of the <a href="http://www.travelalliance.cz/" target="_blank" rel="noopener">Travel Alliance a.s.</a> group</p>
   <div class="footer-logos">
-    <img src="logos/ack-cr.png" alt="ACK ČR" class="logo-ack" />
-    <img src="logos/iata.png" alt="IATA" class="logo-iata" />
+    <img src="logos/ack-cr.png" alt="ACK ČR – Czech association of travel agencies" class="logo-ack" loading="lazy" decoding="async" />
+    <img src="logos/iata.png" alt="IATA accredited agent" class="logo-iata" loading="lazy" decoding="async" />
   </div>
   <div class="footer-legal">
     <a href="docs/obchodni-podminky.pdf" target="_blank" rel="noopener">Terms & Conditions</a>
