@@ -4,7 +4,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit('Method Not Allowed');
 }
 
-$to      = 'jiri.tlaskal@okhotels.cz, trejtnarova@okhotels.cz';
+$to      = 'chumpitaz@oktours.cz, plasil@oktours.cz';
 $bcc     = 'martinbergercz@gmail.com';
 $subject = 'Nový dotaz z webu OK TOURS';
 
