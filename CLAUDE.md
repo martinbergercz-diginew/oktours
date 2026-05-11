@@ -134,3 +134,9 @@ When ready to cut over:
 7. **Then run the GA4 setup** — see `SETUP_GA4.md`.
 
 8. **After 2 weeks of stable traffic on the new domain**, remove `oktours.diginew.cz` from the Caddyfile and from DNS.
+
+---
+
+## Handoff
+
+Když Martin řekne "handoff" — napiš `HANDOFF.md` do **rootu repa** (ne do tohoto adresáře) s aktuálním stavem: co je hotovo, co je rozděláno, co je další krok, klíčové soubory. Auto-deploy hook to commitne a pushne automaticky. Viz root `CLAUDE.md` → sekce Handoff pro přesný formát.
