@@ -255,7 +255,7 @@
       margin: 0 0 40px;
       border-radius: var(--radius);
       background-size: cover;
-      background-position: center;
+      background-position: center top;
       background-repeat: no-repeat;
       box-shadow: var(--shadow);
       overflow: hidden;
@@ -266,6 +266,17 @@
       inset: 0;
       background: linear-gradient(180deg, rgba(10,31,68,0.10) 0%, rgba(10,31,68,0.45) 100%);
       pointer-events: none;
+    }
+    .tech-aside-img {
+      flex: 0 0 420px;
+      height: 280px;
+      border-radius: var(--radius);
+      background-size: cover;
+      background-position: center;
+      box-shadow: var(--shadow);
+    }
+    @media (max-width: 900px) {
+      .tech-aside-img { flex: 1 1 100%; height: 200px; }
     }
     .branch-banner {
       position: relative;
@@ -612,7 +623,6 @@
 <!-- ── FIREMNÍ CESTOVÁNÍ ───────────────────────────────────── -->
 <section id="firemni-cestovani">
   <div class="section-inner">
-    <div class="section-banner" style="background-image:url('sections/firemni-cestovani.jpg');" role="img" aria-label="Firemní cestování s OK TOURS"></div>
     <span class="section-tag">Firemní cestování</span>
     <h2>Optimalizujeme náklady vašich služebních cest</h2>
     <div class="divider"></div>
@@ -713,15 +723,15 @@
 <!-- ── TECHNOLOGIE ─────────────────────────────────────────── -->
 <section id="technologie">
   <div class="section-inner">
-    <div class="section-banner" style="background-image:url('sections/moderni-technologie.jpg');" role="img" aria-label="Moderní technologie v OK TOURS"></div>
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:24px;margin-bottom:0">
-      <div>
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:48px;margin-bottom:0">
+      <div style="flex:1 1 480px;min-width:0">
         <span class="section-tag">Technologie</span>
         <h2>Moderní technologie v&nbsp;osobní péči</h2>
         <div class="divider"></div>
         <p class="lead" style="margin-bottom:0">V zajišťování cestovních služeb se prosazují dynamicky se měnící technologie. Spojujeme osobní péči o klienta s&nbsp;novými technologickými řešeními pro efektivní, hospodárné a spolehlivé cestování.</p>
         <a href="#kontakt" class="btn-primary" style="display:inline-block;margin-top:24px;font-size:.85rem;padding:12px 28px;">Kontaktujte nás</a>
       </div>
+      <div class="tech-aside-img" style="background-image:url('sections/moderni-technologie.jpg');" role="img" aria-label="Moderní technologie v OK TOURS"></div>
     </div>
     <div class="tech-grid">
       <div class="tech-card">
