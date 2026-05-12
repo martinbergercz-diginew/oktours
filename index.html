@@ -250,13 +250,44 @@
     section:nth-child(even) { background: var(--light); }
     .section-inner { max-width: 1160px; margin: 0 auto; }
     .section-banner {
-      height: 320px;
-      margin: 0 0 56px;
+      position: relative;
+      height: 200px;
+      margin: 0 0 40px;
       border-radius: var(--radius);
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
       box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .section-banner::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(10,31,68,0.10) 0%, rgba(10,31,68,0.45) 100%);
+      pointer-events: none;
+    }
+    .branch-banner {
+      position: relative;
+      height: 140px;
+      margin: 0 0 20px;
+      border-radius: var(--radius);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      box-shadow: 0 2px 12px rgba(10,31,68,.08);
+      overflow: hidden;
+    }
+    .branch-banner::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(10,31,68,0.05) 0%, rgba(10,31,68,0.30) 100%);
+      pointer-events: none;
+    }
+    @media (max-width: 768px) {
+      .section-banner { height: 160px; margin-bottom: 28px; }
+      .branch-banner { height: 120px; }
     }
     .section-tag {
       display: inline-block;
@@ -654,6 +685,7 @@
 <!-- ── ZÁKAZNICKÝ SERVIS ───────────────────────────────────── -->
 <section id="zakaznicky-servis">
   <div class="section-inner">
+    <div class="section-banner" style="background-image:url('sections/zakaznicky-servis.jpg');" role="img" aria-label="Zákaznický servis OK TOURS"></div>
     <span class="section-tag">Zákaznický servis</span>
     <h2>Péče, která překračuje vaše očekávání</h2>
     <div class="divider"></div>
@@ -681,6 +713,7 @@
 <!-- ── TECHNOLOGIE ─────────────────────────────────────────── -->
 <section id="technologie">
   <div class="section-inner">
+    <div class="section-banner" style="background-image:url('sections/moderni-technologie.jpg');" role="img" aria-label="Moderní technologie v OK TOURS"></div>
     <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:24px;margin-bottom:0">
       <div>
         <span class="section-tag">Technologie</span>
@@ -853,6 +886,7 @@
     <div class="contact-grid">
       <!-- Praha -->
       <div class="contact-info">
+        <div class="branch-banner" style="background-image:url('sections/tym-praha.jpg');" role="img" aria-label="Tým OK-TOURS Praha"></div>
         <p class="contact-branch-title">OK-TOURS Praha</p>
         <div class="contact-item">
           <div class="ci-icon">📍</div>
@@ -893,6 +927,7 @@
       </div>
       <!-- Ostrava -->
       <div class="contact-info">
+        <div class="branch-banner" style="background-image:url('sections/tym-ostrava.jpg');" role="img" aria-label="Tým OK-TOURS Ostrava"></div>
         <p class="contact-branch-title">OK-TOURS Ostrava</p>
         <div class="contact-item">
           <div class="ci-icon">📍</div>
