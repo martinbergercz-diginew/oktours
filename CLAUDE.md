@@ -73,6 +73,7 @@ rsync -avz --delete \
   --exclude='.DS_Store' \
   --exclude='.claude' \
   --exclude='.last-deploy-marker' \
+  --exclude='_source' \
   --exclude='CLAUDE.md' \
   --exclude='SETUP_GA4.md' \
   --exclude='offer.html' \

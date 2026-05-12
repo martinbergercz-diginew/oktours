@@ -379,15 +379,15 @@
     }
     .team-card:hover { transform: translateY(-4px); }
     .team-photo {
-      height: 220px; background: linear-gradient(135deg, #e2e8f0, #cbd5e0);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 4rem; color: #a0aec0;
+      height: 280px;
+      background-color: #e2e8f0;
+      background-size: cover; background-position: center top;
+      background-repeat: no-repeat;
     }
     .team-info { padding: 20px 18px; }
     .team-info h4 { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: .95rem; color: var(--navy); margin-bottom: 4px; }
-    .team-info .role { font-size: .8rem; color: var(--blue); font-weight: 600; margin-bottom: 8px; }
-    .team-info .exp { font-size: .8rem; color: var(--muted); }
-    .team-info .exp span { color: var(--gold); font-weight: 700; }
+    .team-info .role { font-size: .8rem; color: var(--blue); font-weight: 600; margin-bottom: 10px; }
+    .team-info .motto { font-size: .8rem; color: var(--muted); font-style: italic; line-height: 1.55; }
 
     /* ── Portfolio ────────────────────────────────────────── */
     .portfolio-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 48px; }
@@ -768,41 +768,38 @@
     <p class="lead">Za každou úspěšnou cestou stojí zkušený člověk. Náš tým tvoří odborníci s letitou praxí v cestovním ruchu, kteří jsou vám vždy k dispozici.</p>
     <div class="team-grid">
       <div class="team-card">
-        <div class="team-photo">👤</div>
+        <div class="team-photo" style="background-image:url('team/pavel-trejtnar.jpg');" role="img" aria-label="Pavel Trejtnar"></div>
         <div class="team-info">
-          <h4>Jméno Příjmení</h4>
-          <div class="role">Ředitel / CEO</div>
-          <div class="exp">Praxe v oboru: <span>20+ let</span></div>
+          <h4>Pavel Trejtnar</h4>
+          <div class="role">Předseda představenstva, CEO</div>
+          <p class="motto">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
         </div>
       </div>
       <div class="team-card">
-        <div class="team-photo">👤</div>
+        <div class="team-photo" style="background-image:url('team/petr-skrivan.jpg');" role="img" aria-label="Petr Skřivan"></div>
         <div class="team-info">
-          <h4>Jméno Příjmení</h4>
-          <div class="role">Key Account Manager</div>
-          <div class="exp">Praxe v oboru: <span>15+ let</span></div>
+          <h4>Petr Skřivan</h4>
+          <div class="role">Místopředseda představenstva, Finanční ředitel</div>
+          <p class="motto">Consectetur adipiscing elit, sed do eiusmod tempor incididunt.</p>
         </div>
       </div>
       <div class="team-card">
-        <div class="team-photo">👤</div>
+        <div class="team-photo" style="background-image:url('team/silvie-trejtnarova.jpg');" role="img" aria-label="Silvie Trejtnarová"></div>
         <div class="team-info">
-          <h4>Jméno Příjmení</h4>
-          <div class="role">Cestovní expert</div>
-          <div class="exp">Praxe v oboru: <span>12+ let</span></div>
+          <h4>Silvie Trejtnarová</h4>
+          <div class="role">Marketing &amp; Guest Relations</div>
+          <p class="motto">Ut enim ad minim veniam, quis nostrud exercitation ullamco.</p>
         </div>
       </div>
       <div class="team-card">
-        <div class="team-photo">👤</div>
+        <div class="team-photo" style="background-image:url('team/marek-plasil.jpg');" role="img" aria-label="Marek Plášil"></div>
         <div class="team-info">
-          <h4>Jméno Příjmení</h4>
-          <div class="role">Technologický specialista</div>
-          <div class="exp">Praxe v oboru: <span>8+ let</span></div>
+          <h4>Marek Plášil</h4>
+          <div class="role">Ředitel Business Travel</div>
+          <p class="motto">Duis aute irure dolor in reprehenderit in voluptate velit.</p>
         </div>
       </div>
     </div>
-    <p style="text-align:center;margin-top:32px;color:var(--muted);font-size:.9rem;">
-      <em>Fotografie a podrobnější profily zaměstnanců budou doplněny.</em>
-    </p>
   </div>
 </section>
 
