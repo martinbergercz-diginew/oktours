@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>OK TOURS — správa webu</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <main class="chat" id="chat">
+      <header class="chat-header">
+        <h1>OK TOURS — správa webu</h1>
+        <div class="state-pill" id="state-pill">Načítám…</div>
+      </header>
+
+      <div class="messages" id="messages" aria-live="polite"></div>
+
+      <form class="composer" id="composer">
+        <label class="upload-btn" title="Nahrát obrázek nebo PDF">
+          <input type="file" id="upload" accept="image/jpeg,image/png,image/webp,application/pdf" hidden>
+          <span>+</span>
+        </label>
+        <textarea id="input" placeholder="Napiš, co chceš změnit na webu…" rows="2" required></textarea>
+        <button type="submit" id="send">Odeslat</button>
+      </form>
+    </main>
+
+    <aside class="history" id="history">
+      <h2>Historie změn</h2>
+      <ol id="history-list">
+        <li class="empty">Načítám…</li>
+      </ol>
+    </aside>
+
+    <button class="history-toggle" id="history-toggle" aria-label="Otevřít historii">≡</button>
+  </div>
+
+  <script src="app.js" type="module"></script>
+</body>
+</html>
