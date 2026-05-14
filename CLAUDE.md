@@ -38,6 +38,7 @@ Static HTML site for OK Tours corporate travel agency. Has Czech + English langu
 - `index-v1.html` — old version reference
 - `CLAUDE.md` — this file
 - `SETUP_GA4.md` — instructions for the next Claude session that wires up Google Analytics
+- `ADMIN_CHAT_SPEC.md` — design spec for a future chat-driven admin panel
 - `.claude/`, `offer-state.json`
 
 ---
@@ -76,6 +77,7 @@ rsync -avz --delete \
   --exclude='_source' \
   --exclude='CLAUDE.md' \
   --exclude='SETUP_GA4.md' \
+  --exclude='ADMIN_CHAT_SPEC.md' \
   --exclude='offer.html' \
   --exclude='offer-api.php' \
   --exclude='offer-state.json' \
