@@ -7,6 +7,10 @@ import url from "node:url";
 import Fastify from "fastify";
 import fastifyStatic from "@fastify/static";
 
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+const execFileP = promisify(execFile);
+
 import { runTurn } from "./agent.js";
 import { GitOps } from "./ops/git-ops.js";
 import { smokeCheck } from "./ops/smoke.js";
@@ -28,7 +32,17 @@ const dataDir = process.env.DATA_DIR || path.resolve(__dirname, "..", "data");
 process.env.DATA_DIR = dataDir;
 await fs.mkdir(dataDir, { recursive: true });
 
-const REPO_PATH = process.env.REPO_PATH || path.resolve(__dirname, "..", "..", "..");
+// Where the developer's main checkout lives — used in dry-run to attach a
+// dedicated worktree for admin ops so they don't trample the active dev tree.
+const SOURCE_REPO = path.resolve(__dirname, "..", "..", "..");
+
+// REPO_PATH = the dir admin-service operates IN. In production this is the
+// VPS canonical checkout (/srv/oktours-repo). In dry-run we use an isolated
+// worktree attached to SOURCE_REPO, so the developer's main branch+files
+// stay untouched even though both share the same git history.
+const REPO_PATH = process.env.REPO_PATH || (
+  DRY_RUN ? path.join(dataDir, "dev-worktree") : SOURCE_REPO
+);
 const STAGING_PATH = process.env.STAGING_PATH || path.join(dataDir, "dev-staging");
 const SHADOW_PATH = process.env.SHADOW_PATH || path.join(dataDir, "dev-shadow");
 const LIVE_PATH = process.env.LIVE_PATH || path.join(dataDir, "dev-live");
@@ -37,6 +51,33 @@ const PREVIOUS_PATH = process.env.PREVIOUS_PATH || path.join(dataDir, "dev-previ
 // Make sure the deploy target dirs exist so fastify-static can mount them.
 for (const p of [STAGING_PATH, SHADOW_PATH, LIVE_PATH, PREVIOUS_PATH]) {
   await fs.mkdir(p, { recursive: true });
+}
+
+// In dry-run, lazily create an isolated git worktree the first time we boot.
+// The worktree shares git history with the developer's main checkout but
+// has its own working tree + HEAD, so branch switches don't reset the
+// developer's files.
+if (DRY_RUN && !(await fileExists(path.join(REPO_PATH, ".git")))) {
+  // First, prune any stale worktree registrations from prior dirty exits.
+  await execFileP("git", ["-C", SOURCE_REPO, "worktree", "prune"]).catch(() => {});
+
+  const branchName = "admin-service-local";
+  try {
+    // -B reuses or creates the branch; --force lets us re-attach if a
+    // stale entry pointed to this path before.
+    await execFileP("git", [
+      "-C", SOURCE_REPO,
+      "worktree", "add", "--force", "-B", branchName, REPO_PATH, "main",
+    ]);
+    console.log(`[dev] created isolated worktree at ${REPO_PATH} (branch: ${branchName})`);
+  } catch (err) {
+    console.warn(`[dev] could not create worktree: ${err.message}`);
+    console.warn(`[dev] falling back to SOURCE_REPO directly — beware: git ops will touch your active checkout`);
+  }
+}
+
+async function fileExists(p) {
+  try { await fs.access(p); return true; } catch { return false; }
 }
 
 const STAGING_URL = process.env.STAGING_URL || `http://localhost:${PORT}/_staging`;

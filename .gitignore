@@ -1,10 +1,6 @@
 node_modules/
-data/sessions.json
-data/uploads-pending.json
-data/screenshots/
-data/draft-*.json
-data/rate-limit.json
+data/
 .env
 .env.local
-*.log
 .env.*
+*.log
