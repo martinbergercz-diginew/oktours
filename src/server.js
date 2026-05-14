@@ -90,6 +90,13 @@ const gitOps = new GitOps({
   livePath: LIVE_PATH,
   previousPath: PREVIOUS_PATH,
   dryRun: DRY_RUN,
+  // In dev we operate inside an isolated git worktree on its own branch so
+  // we never try to check out "main" (which is owned by the developer's
+  // primary worktree). publishedBranch is the ref the admin service treats
+  // as "currently live" — in prod that's main itself; in dev we use a
+  // private ref so we never touch the developer's main.
+  workingBranch: DRY_RUN ? "admin-service-local" : "staging",
+  publishedBranch: DRY_RUN ? "admin-service-published" : "main",
 });
 
 const uploadsStore = new UploadsStore();

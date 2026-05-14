@@ -1,105 +1,95 @@
 // Git operations against the on-disk repo at REPO_PATH.
-// Wraps simple-git with the specific flows the admin service needs:
-//   - applyDraft → commit-to-staging (with optional squash)
-//   - publish → shadow-deploy + smoke + atomic swap
-//   - revert → inverse commit
-//   - resetStagingToMain
+//
+// Design: the admin service operates on `workingBranch` and NEVER does
+// `git checkout main`. Main is treated as a ref to compare against and to
+// fast-forward when publishing, but the checkout/working-tree always stays
+// on `workingBranch`. This matters in local dev where the admin-service
+// runs inside an isolated `git worktree` — main is checked out in the
+// developer's main worktree, and git refuses to check out the same branch
+// in two worktrees at once.
+//
+// Conventions:
+//   - workingBranch: where commits accumulate while waiting for "publish"
+//       — "admin-service-local" in dev, "staging" in prod.
+//   - "ahead of main": there are workingBranch commits not yet in main
+//       — those are the unpublished staging changes.
 
 import simpleGit from "simple-git";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { isDraftEmpty } from "../draft.js";
 
-const REPO_SUBDIR = "ok-tours";   // the live site lives in this subdir of the monorepo
+const REPO_SUBDIR = "ok-tours";
 
 export class GitOps {
-  constructor({ repoRoot, stagingPath, shadowPath, livePath, previousPath, dryRun }) {
+  constructor({
+    repoRoot, stagingPath, shadowPath, livePath, previousPath, dryRun,
+    workingBranch = "staging",
+    publishedBranch = "main",
+  }) {
     this.repoRoot = repoRoot;
     this.stagingPath = stagingPath;
     this.shadowPath = shadowPath;
     this.livePath = livePath;
     this.previousPath = previousPath;
     this.dryRun = dryRun;
+    this.workingBranch = workingBranch;
+    // publishedBranch = the ref the admin service treats as "currently live".
+    // In prod = "main". In dev = "admin-service-published" (a private ref
+    // the admin service controls — we never touch the developer's "main").
+    this.publishedBranch = publishedBranch;
     this.git = simpleGit(repoRoot);
   }
 
   async ensureBranches() {
-    await this.git.fetch().catch(() => {});   // ignore offline
+    await this.git.fetch().catch(() => {});
     const branches = await this.git.branchLocal();
-    if (!branches.all.includes("staging")) {
-      await this.git.checkoutBranch("staging", "main");
+    // publishedBranch needs to exist for aheadOf to work. Seed from main.
+    if (!branches.all.includes(this.publishedBranch) && this.publishedBranch !== "main") {
+      await this.git.raw(["branch", this.publishedBranch, "main"]);
     }
-  }
-
-  /**
-   * Stash uncommitted work outside ok-tours/ before doing any branch ops.
-   * Used in local dev where the developer's WIP shouldn't block the admin
-   * flow. Returns a token usable to restore the stash; null if nothing
-   * stashed.
-   */
-  async stashNonContentChanges() {
+    if (!branches.all.includes(this.workingBranch)) {
+      await this.git.raw(["branch", this.workingBranch, this.publishedBranch]);
+    }
+    // Make sure we're ON the working branch.
     const status = await this.git.status();
-    // Only stash if there are uncommitted changes outside the ok-tours/ subdir
-    // — that's what could collide with branch switching. ok-tours/ itself
-    // is the canvas the admin service operates on.
-    const dirtyOutsideContent = status.files.some(f => !f.path.startsWith(REPO_SUBDIR + "/"));
-    if (!dirtyOutsideContent) return null;
-    const label = `oktours-admin-autostash-${Date.now()}`;
-    await this.git.raw(["stash", "push", "--include-untracked", "-m", label]);
-    return label;
-  }
-
-  async restoreStash(label) {
-    if (!label) return;
-    // Pop the most recent stash if it matches our label.
-    try {
-      const list = await this.git.raw(["stash", "list"]);
-      const line = list.split("\n").find(l => l.includes(label));
-      if (!line) return;
-      const idx = line.match(/^stash@\{(\d+)\}/)?.[1];
-      if (idx === undefined) return;
-      await this.git.raw(["stash", "pop", `stash@{${idx}}`]);
-    } catch (err) {
-      // If pop conflicts, leave it stashed and surface a warning.
-      console.warn(`Could not auto-pop stash ${label}: ${err.message}`);
+    if (status.current !== this.workingBranch) {
+      await this.git.checkout(this.workingBranch);
     }
   }
 
   /**
-   * Apply the in-memory draft to disk inside the repo, commit on staging,
-   * push, and rsync to the staging deploy path.
-   *
-   * If staging already has an unpublished commit ahead of main, this AMENDS
-   * that commit (squash-on-second-turn, §3.2).
+   * Update publishedBranch from origin without checking out anything.
+   * In prod: pulls origin/main into local main.
+   * In dev: no-op (the admin-service-published ref is local-only and
+   * advanced via publishWithSmoke; we don't sync it from anywhere).
    */
+  async syncPublishedRef() {
+    if (this.publishedBranch !== "main") return;
+    try {
+      await this.git.raw(["fetch", "origin", `${this.publishedBranch}:${this.publishedBranch}`]);
+    } catch (err) {
+      if (!/no upstream|Couldn't find remote|not a fast-forward|refusing to fetch/i.test(err.message)) {
+        console.warn(`[git] syncPublishedRef warning: ${err.message}`);
+      }
+    }
+  }
+
   async applyDraftToStaging(draft) {
     if (isDraftEmpty(draft)) {
       throw new Error("Draft is empty — nothing to commit.");
     }
-
-    // In local dev the developer's pending source edits to admin-service/
-    // would block git checkout. Stash them so the admin flow can proceed.
-    const stashLabel = await this.stashNonContentChanges();
-
-    try {
-      return await this._applyDraftInner(draft);
-    } finally {
-      await this.restoreStash(stashLabel);
-    }
+    return this._withStash(() => this._applyDraftInner(draft));
   }
 
   async _applyDraftInner(draft) {
-    // Sync main first, then base staging on main.
-    await this.git.checkout("main");
-    await this.git.pull("origin", "main", ["--rebase"]).catch(() => {});
+    await this.ensureBranches();
+    await this.syncPublishedRef();
 
-    const ahead = await this.stagingAheadOfMain();
-    if (ahead === 0) {
-      // staging == main; reset cleanly
-      await this.git.checkout("staging");
-      await this.git.reset(["--hard", "main"]);
-    } else {
-      await this.git.checkout("staging");
+    const aheadBefore = await this.aheadOfMain();
+    // If working branch is at publishedBranch, reset clean to it.
+    if (aheadBefore === 0) {
+      await this.git.reset(["--hard", this.publishedBranch]);
     }
 
     // Apply writes.
@@ -115,7 +105,6 @@ export class GitOps {
       await fs.rm(abs, { force: true });
     }
 
-    // Stage just the ok-tours subdir.
     await this.git.add([REPO_SUBDIR]);
     const status = await this.git.status();
     if (status.files.length === 0) {
@@ -123,48 +112,39 @@ export class GitOps {
     }
 
     const message = draft.commit_message || draft.summary_cs || "ok-tours: chat-driven update";
-    if (ahead === 0) {
+    if (aheadBefore === 0) {
       await this.git.commit(message);
     } else {
-      // Squash: amend prior staging commit, replacing the message with the bundled summary.
+      // Squash: amend the pending staging commit.
       await this.git.commit(message, ["--amend"]);
     }
 
     if (!this.dryRun) {
-      // staging may be ahead of remote staging; force-push since staging is scratch space.
-      await this.git.push("origin", "staging", ["--force"]).catch(err => {
+      await this.git.push("origin", `${this.workingBranch}:staging`, ["--force"]).catch(err => {
         throw new Error(`Failed to push staging: ${err.message}`);
       });
     }
 
-    const head = await this.git.revparse(["HEAD"]);
+    const head = (await this.git.revparse(["HEAD"])).trim();
     await this.rsync(path.join(this.repoRoot, REPO_SUBDIR), this.stagingPath);
-    return { commit: head.trim() };
+    return { commit: head };
   }
 
-  /**
-   * Shadow-deploy + smoke + atomic swap. Caller passes a smokeCheck function
-   * which receives the shadow path and returns { ok, failures }.
-   */
   async publishWithSmoke(smokeCheck) {
-    const stashLabel = await this.stashNonContentChanges();
-    try {
-      return await this._publishWithSmokeInner(smokeCheck);
-    } finally {
-      await this.restoreStash(stashLabel);
-    }
+    return this._withStash(() => this._publishWithSmokeInner(smokeCheck));
   }
 
   async _publishWithSmokeInner(smokeCheck) {
-    const ahead = await this.stagingAheadOfMain();
+    await this.ensureBranches();
+    const ahead = await this.aheadOfMain();
     if (ahead === 0) {
       throw new Error("Nothing to publish — staging is the same as main.");
     }
 
-    // 1. Materialize shadow from current staging content.
+    // Materialize shadow.
     await this.rsync(this.stagingPath, this.shadowPath);
 
-    // 2. Smoke.
+    // Smoke.
     const smoke = await smokeCheck(this.shadowPath);
     if (!smoke.ok) {
       await fs.rm(this.shadowPath, { recursive: true, force: true });
@@ -173,64 +153,64 @@ export class GitOps {
       throw err;
     }
 
-    // 3. Merge staging → main (fast-forward).
-    await this.git.checkout("main");
-    await this.git.pull("origin", "main", ["--rebase"]).catch(() => {});
-    await this.git.merge(["--ff-only", "staging"]);
-    if (!this.dryRun) {
-      await this.git.push("origin", "main");
+    const newHead = (await this.git.revparse(["HEAD"])).trim();
+
+    // Advance the publishedBranch ref to point at workingBranch HEAD.
+    // In prod, publishedBranch=main, so this is the merge-into-main step
+    // and we follow with a push to origin. In dev, publishedBranch is a
+    // private ref (admin-service-published) that the developer never sees,
+    // and there's no remote to push to.
+    await this.git.raw(["update-ref", `refs/heads/${this.publishedBranch}`, newHead]);
+
+    if (!this.dryRun && this.publishedBranch === "main") {
+      await this.git.push("origin", this.publishedBranch).catch(err => {
+        throw new Error(`Failed to push ${this.publishedBranch}: ${err.message}`);
+      });
     }
 
-    // 4. Atomic swap. mv-old-out, mv-new-in.
+    // Atomic swap of live content.
     if (!this.dryRun) {
       await fs.rm(this.previousPath, { recursive: true, force: true });
-      try {
-        await fs.rename(this.livePath, this.previousPath);
-      } catch (err) {
-        if (err.code !== "ENOENT") throw err;
-      }
+      try { await fs.rename(this.livePath, this.previousPath); }
+      catch (err) { if (err.code !== "ENOENT") throw err; }
+      await fs.rename(this.shadowPath, this.livePath);
+    } else {
+      // Dev: just copy shadow over live.
+      await fs.rm(this.livePath, { recursive: true, force: true });
       await fs.rename(this.shadowPath, this.livePath);
     }
 
-    // 5. Reset staging to match main (no force-push needed; ff).
-    await this.git.checkout("staging");
-    await this.git.reset(["--hard", "main"]);
-    if (!this.dryRun) await this.git.push("origin", "staging", ["--force"]);
+    // After publish, workingBranch == main. Stay on workingBranch (no
+    // checkout needed). On next edit, ensureBranches will detect ahead==0
+    // and reset cleanly.
 
-    const head = await this.git.revparse(["HEAD"]);
-    return { commit: head.trim() };
+    if (!this.dryRun) {
+      // Keep remote staging in sync with main.
+      await this.git.push("origin", `${this.workingBranch}:staging`, ["--force"]).catch(() => {});
+    }
+
+    return { commit: newHead };
   }
 
   /**
    * Used when Martin pushes to main from claude.ai and wants to deploy
-   * those changes to production without going through the chat flow.
-   * Pulls latest main, runs smoke on shadow, atomic-swaps live.
-   * Does NOT merge or push (main is already authoritative).
+   * those changes without going through the chat flow.
+   * Pulls latest main into the local ref, smokes shadow, swaps live.
    */
   async redeployMain(smokeCheck) {
-    const stashLabel = await this.stashNonContentChanges();
-    try {
-      return await this._redeployMainInner(smokeCheck);
-    } finally {
-      await this.restoreStash(stashLabel);
-    }
+    return this._withStash(() => this._redeployMainInner(smokeCheck));
   }
 
   async _redeployMainInner(smokeCheck) {
-    await this.git.checkout("main");
-    await this.git.pull("origin", "main", ["--rebase"]).catch(() => {});
+    await this.ensureBranches();
+    await this.syncPublishedRef();
 
-    // Reset staging to match main so staging stays a clean reflection.
-    const branches = await this.git.branchLocal();
-    if (branches.all.includes("staging")) {
-      await this.git.checkout("staging");
-      await this.git.reset(["--hard", "main"]);
-      if (!this.dryRun) await this.git.push("origin", "staging", ["--force"]).catch(() => {});
+    // Reset workingBranch to match main so we deploy from a clean state.
+    await this.git.reset(["--hard", this.publishedBranch]);
+    if (!this.dryRun) {
+      await this.git.push("origin", `${this.workingBranch}:staging`, ["--force"]).catch(() => {});
     }
 
-    // Rsync repo → staging deploy target first (so shadow can pull from
-    // staging, mirroring the publish flow shape).
-    await this.git.checkout("main");
     await this.rsync(path.join(this.repoRoot, REPO_SUBDIR), this.stagingPath);
     await this.rsync(this.stagingPath, this.shadowPath);
 
@@ -247,59 +227,94 @@ export class GitOps {
       try { await fs.rename(this.livePath, this.previousPath); }
       catch (err) { if (err.code !== "ENOENT") throw err; }
       await fs.rename(this.shadowPath, this.livePath);
+    } else {
+      await fs.rm(this.livePath, { recursive: true, force: true });
+      await fs.rename(this.shadowPath, this.livePath);
     }
+
     const head = (await this.git.revparse(["HEAD"])).trim();
     return { commit: head };
   }
 
   async undoStaging() {
-    const stashLabel = await this.stashNonContentChanges();
-    try {
-      await this.git.checkout("staging");
-      await this.git.reset(["--hard", "origin/main"]).catch(async () => {
-        // No origin/main in local dev; fall back to local main.
-        await this.git.reset(["--hard", "main"]);
-      });
-      if (!this.dryRun) await this.git.push("origin", "staging", ["--force"]);
+    return this._withStash(async () => {
+      await this.ensureBranches();
+      await this.git.reset(["--hard", this.publishedBranch]);
+      if (!this.dryRun) await this.git.push("origin", `${this.workingBranch}:staging`, ["--force"]).catch(() => {});
       await this.rsync(path.join(this.repoRoot, REPO_SUBDIR), this.stagingPath);
-    } finally {
-      await this.restoreStash(stashLabel);
-    }
+    });
   }
 
   async revertCommit(commitHash) {
-    // Only commits within the last 90 days.
-    const log = await this.git.log({ from: "HEAD~200", to: "HEAD" }).catch(() => ({ all: [] }));
-    const found = log.all.find(c => c.hash === commitHash || c.hash.startsWith(commitHash));
-    if (!found) throw new Error(`Commit ${commitHash} not found in recent history.`);
-    const ageDays = (Date.now() - new Date(found.date).getTime()) / 86400000;
-    if (ageDays > 90) throw new Error(`Commit too old to revert (${ageDays.toFixed(0)} days).`);
+    return this._withStash(async () => {
+      await this.ensureBranches();
+      const log = await this.git.log({ maxCount: 200 }).catch(() => ({ all: [] }));
+      const found = log.all.find(c => c.hash === commitHash || c.hash.startsWith(commitHash));
+      if (!found) throw new Error(`Commit ${commitHash} not found in recent history.`);
+      const ageDays = (Date.now() - new Date(found.date).getTime()) / 86400000;
+      if (ageDays > 90) throw new Error(`Commit too old to revert (${ageDays.toFixed(0)} days).`);
 
-    await this.git.checkout("main");
-    await this.git.pull("origin", "main", ["--rebase"]).catch(() => {});
-    await this.git.revert(commitHash, ["--no-edit"]);
-    if (!this.dryRun) await this.git.push("origin", "main");
+      // Make sure workingBranch is at main (or ahead — we revert from there).
+      await this.syncPublishedRef();
+      await this.git.reset(["--hard", this.publishedBranch]);
 
-    // After revert, run shadow-deploy + smoke (skipping it once for revert
-    // would be risky if the prior state itself was broken).
-    return this.publishWithSmoke(async () => ({ ok: true, failures: [] }));
+      await this.git.revert(commitHash, ["--no-edit"]);
+
+      // Advance publishedBranch to include the revert.
+      const newHead = (await this.git.revparse(["HEAD"])).trim();
+      await this.git.raw(["update-ref", `refs/heads/${this.publishedBranch}`, newHead]);
+      if (!this.dryRun && this.publishedBranch === "main") {
+        await this.git.push("origin", this.publishedBranch).catch(() => {});
+      }
+
+      // Run shadow+smoke+swap.
+      return this._publishLikeWithoutMerge();
+    });
   }
 
-  async stagingAheadOfMain() {
+  async _publishLikeWithoutMerge() {
+    await this.rsync(path.join(this.repoRoot, REPO_SUBDIR), this.stagingPath);
+    await this.rsync(this.stagingPath, this.shadowPath);
+    if (!this.dryRun) {
+      await fs.rm(this.previousPath, { recursive: true, force: true });
+      try { await fs.rename(this.livePath, this.previousPath); }
+      catch (err) { if (err.code !== "ENOENT") throw err; }
+      await fs.rename(this.shadowPath, this.livePath);
+    } else {
+      await fs.rm(this.livePath, { recursive: true, force: true });
+      await fs.rename(this.shadowPath, this.livePath);
+    }
+    const head = (await this.git.revparse(["HEAD"])).trim();
+    return { commit: head };
+  }
+
+  /**
+   * Count commits on workingBranch that aren't in main. >0 = unpublished
+   * staging changes.
+   */
+  /**
+   * How many commits workingBranch is ahead of publishedBranch.
+   * >0 = unpublished staged changes.
+   */
+  async aheadOfMain() {
     try {
-      const result = await this.git.raw(["rev-list", "--count", "main..staging"]);
+      const result = await this.git.raw([
+        "rev-list", "--count", `${this.publishedBranch}..${this.workingBranch}`,
+      ]);
       return parseInt(result.trim(), 10) || 0;
     } catch (err) {
-      // staging branch doesn't exist yet — treat as 0 ahead.
       if (/unknown revision|ambiguous argument/i.test(err.message)) return 0;
       throw err;
     }
   }
 
+  // Kept as an alias so existing server code calling this name still works.
+  async stagingAheadOfMain() {
+    return this.aheadOfMain();
+  }
+
   async historySince(maxCount = 50) {
-    const log = await this.git.log({ maxCount, from: "HEAD~" + maxCount, to: "HEAD" }).catch(async () => {
-      return await this.git.log({ maxCount });
-    });
+    const log = await this.git.log({ maxCount }).catch(() => ({ all: [] }));
     return log.all.map(c => ({
       hash: c.hash,
       short: c.hash.slice(0, 7),
@@ -309,12 +324,56 @@ export class GitOps {
     }));
   }
 
+  // ---- stash helpers (only meaningful in dev where source files share a worktree) ----
+
+  async _withStash(fn) {
+    const label = await this._stashNonContentChanges();
+    try { return await fn(); }
+    finally { await this._restoreStash(label); }
+  }
+
+  async _stashNonContentChanges() {
+    const status = await this.git.status();
+    const dirtyOutsideContent = status.files.some(f => !f.path.startsWith(REPO_SUBDIR + "/"));
+    if (!dirtyOutsideContent) return null;
+    const label = `oktours-admin-autostash-${Date.now()}`;
+    await this.git.raw(["stash", "push", "--include-untracked", "-m", label]);
+    return label;
+  }
+
+  async _restoreStash(label) {
+    if (!label) return;
+    try {
+      const list = await this.git.raw(["stash", "list"]);
+      const line = list.split("\n").find(l => l.includes(label));
+      if (!line) return;
+      const idx = line.match(/^stash@\{(\d+)\}/)?.[1];
+      if (idx === undefined) return;
+      await this.git.raw(["stash", "pop", `stash@{${idx}}`]);
+    } catch (err) {
+      console.warn(`Could not auto-pop stash ${label}: ${err.message}`);
+    }
+  }
+
   async rsync(from, to) {
-    // In production, use the actual `rsync` binary for atomicity and --delete.
-    // In dry-run / local dev, copy via fs.cp.
     await fs.mkdir(to, { recursive: true });
     if (this.dryRun) {
-      await fs.cp(from, to, { recursive: true, force: true });
+      // In dev, plain recursive copy. Make sure to clean target first so
+      // deletes propagate.
+      const entries = await fs.readdir(to).catch(() => []);
+      for (const name of entries) {
+        if (name === ".git" || name === "admin-service") continue;
+        await fs.rm(path.join(to, name), { recursive: true, force: true });
+      }
+      await fs.cp(from, to, {
+        recursive: true,
+        force: true,
+        filter: src => {
+          const base = path.basename(src);
+          if (base === ".git" || base === "admin-service" || base === "node_modules") return false;
+          return true;
+        },
+      });
       return;
     }
     const { execFile } = await import("node:child_process");
