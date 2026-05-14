@@ -146,6 +146,48 @@ export class GitOps {
     return { commit: head.trim() };
   }
 
+  /**
+   * Used when Martin pushes to main from claude.ai and wants to deploy
+   * those changes to production without going through the chat flow.
+   * Pulls latest main, runs smoke on shadow, atomic-swaps live.
+   * Does NOT merge or push (main is already authoritative).
+   */
+  async redeployMain(smokeCheck) {
+    await this.git.checkout("main");
+    await this.git.pull("origin", "main", ["--rebase"]).catch(() => {});
+
+    // Reset staging to match main so staging stays a clean reflection.
+    const branches = await this.git.branchLocal();
+    if (branches.all.includes("staging")) {
+      await this.git.checkout("staging");
+      await this.git.reset(["--hard", "main"]);
+      if (!this.dryRun) await this.git.push("origin", "staging", ["--force"]).catch(() => {});
+    }
+
+    // Rsync repo → staging deploy target first (so shadow can pull from
+    // staging, mirroring the publish flow shape).
+    await this.git.checkout("main");
+    await this.rsync(path.join(this.repoRoot, REPO_SUBDIR), this.stagingPath);
+    await this.rsync(this.stagingPath, this.shadowPath);
+
+    const smoke = await smokeCheck(this.shadowPath);
+    if (!smoke.ok) {
+      await fs.rm(this.shadowPath, { recursive: true, force: true });
+      const err = new Error(`Smoke test failed: ${smoke.failures.join("; ")}`);
+      err.code = "SMOKE_FAILED";
+      throw err;
+    }
+
+    if (!this.dryRun) {
+      await fs.rm(this.previousPath, { recursive: true, force: true });
+      try { await fs.rename(this.livePath, this.previousPath); }
+      catch (err) { if (err.code !== "ENOENT") throw err; }
+      await fs.rename(this.shadowPath, this.livePath);
+    }
+    const head = (await this.git.revparse(["HEAD"])).trim();
+    return { commit: head };
+  }
+
   async undoStaging() {
     await this.git.checkout("staging");
     await this.git.reset(["--hard", "origin/main"]);

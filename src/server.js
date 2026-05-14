@@ -282,6 +282,28 @@ fastify.post("/admin/api/undo", async () => {
   return { ok: true };
 });
 
+// Redeploy main — used by Martin after pushing edits from claude.ai.
+// Pulls latest main, smoke-tests, atomic-swaps live. No merge, no push.
+// Protected by a shared secret in the X-Admin-Token header so it can't be
+// hit anonymously through Caddy's basic-auth.
+fastify.post("/admin/api/redeploy-main", async (req, reply) => {
+  const expected = process.env.REDEPLOY_TOKEN;
+  if (!expected) return reply.code(503).send({ error: "REDEPLOY_TOKEN not configured" });
+  if (req.headers["x-admin-token"] !== expected) {
+    return reply.code(401).send({ error: "Invalid token" });
+  }
+  try {
+    const { commit } = await gitOps.redeployMain(smokeCheck);
+    return { ok: true, commit, liveUrl: LIVE_URL };
+  } catch (err) {
+    if (err.code === "SMOKE_FAILED") {
+      return reply.code(400).send({ error: err.message, smoke: true });
+    }
+    fastify.log.error({ err }, "Redeploy failed");
+    return reply.code(500).send({ error: err.message });
+  }
+});
+
 // Revert — inverse-commit a past commit.
 fastify.post("/admin/api/revert", async (req, reply) => {
   const { commit } = req.body ?? {};
