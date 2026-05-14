@@ -5,9 +5,14 @@ import Anthropic from "@anthropic-ai/sdk";
 import { TOOL_DEFINITIONS, runTool } from "./tools/index.js";
 import { SITE_CONFIG } from "./site-config.js";
 
-const MAX_TOOL_CALLS = 20;
-const MAX_TOKENS = 100_000;
-const MAX_WALL_MS = 120_000;
+// Sized for real-world HTML edits on this site: index.html is ~52KB (~13K
+// tokens) and most edits read CS + EN versions. Worst-case one turn:
+// read CS (~13K) + read EN (~13K) + write CS (~13K) + write EN (~13K) +
+// propose_change + system prompt + accumulating history → ~80-120K total.
+// Budget set with headroom; tighten later if abused.
+const MAX_TOOL_CALLS = 30;
+const MAX_TOKENS = 250_000;
+const MAX_WALL_MS = 180_000;
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
@@ -26,12 +31,17 @@ Tvá pravidla:
 
 5. **Strukturální požadavky odmítej.** Pokud klient chce přidat novou sekci typu, změnit layout nebo restyle, odpověz: "To je strukturální změna. Napíšu Martinovi, aby ji udělal. Mám mu poslat zprávu?"
 
-6. **Postupuj vždy takto:**
-   - 'list_files' nebo 'list_pages' pro orientaci.
-   - 'read_file' pro relevantní soubory.
-   - 'write_file' (a případně 'delete_file') pro nachystání změn do draftu (NEJDE na disk).
+6. **KAŽDÝ editační požadavek MUSÍ skončit voláním 'propose_change'.** Nikdy se klienta neptej "mám to udělat?" v textu — místo toho zavolej 'propose_change' s českým souhrnem a klient klikne na tlačítko. Postup:
+   - 'list_pages' pro orientaci (rychlejší než list_files).
+   - 'read_file' pro relevantní soubory — ideálně jen JEDNOU pro každou stránku, ne opakovaně.
+   - **Pro malé úpravy textu (změna slova, věty, čísla, smazání tečky) použij 'edit_text_in_file'** — nepotřebuje znova posílat celý soubor, je výrazně rychlejší a levnější.
+   - 'write_file' použij JEN když přepisuješ velkou část souboru nebo vytváříš nový soubor.
    - 'propose_change' pro souhrn v češtině a předání klientovi k potvrzení.
    - PO 'propose_change' STOP — neprováděj další akce. Čekej na klientovo potvrzení.
+
+   Pokud si nejsi jistý CO klient chce změnit, zeptej se v textu BEZ volání write_file/edit_text. Pokud víš co změnit, rovnou udělej edit_text_in_file + propose_change v jedné odpovědi — nečekej na další "ok".
+
+   **NIKDY nečte stejný soubor dvakrát za sebou.** Když jsi ho už přečetl, máš jeho obsah v kontextu. Plýtvání tokeny = rychle dojde rozpočet.
 
 7. **Soubory mimo allowlist nemůžeš editovat.** Caddyfile, .php, .sh, .git, .env — všechno blokované na úrovni nástrojů. Když nástroj vrátí chybu, omluv se klientovi a navrhni jiný postup.
 
@@ -47,7 +57,11 @@ export async function runTurn({ userMessage, session, draft, repoRoot, uploadsSt
   let totalTokens = 0;
   let toolCalls = 0;
 
-  const messages = [...session.messages];
+  // Defensively drop any trailing assistant message whose tool_use blocks
+  // aren't followed by a matching tool_result user message. This prevents
+  // a corrupted history (e.g. from a crashed prior turn) from poisoning
+  // every subsequent API call with 400 errors.
+  const messages = sanitizeMessages([...session.messages]);
   messages.push({ role: "user", content: userMessage });
 
   const ctx = {
@@ -79,7 +93,7 @@ export async function runTurn({ userMessage, session, draft, repoRoot, uploadsSt
 
     const response = await client.messages.create({
       model: MODEL,
-      max_tokens: 4096,
+      max_tokens: 16384,
       system: systemBlocks,
       tools: TOOL_DEFINITIONS,
       messages,
@@ -97,12 +111,17 @@ export async function runTurn({ userMessage, session, draft, repoRoot, uploadsSt
     if (textBlock) assistantTextOut = textBlock.text;
 
     const toolUses = assistantBlocks.filter(b => b.type === "tool_use");
-    if (toolUses.length === 0 || response.stop_reason !== "tool_use") {
-      // Model is done.
+
+    // If the model produced no tool_use blocks at all, we're done.
+    // (We intentionally ignore stop_reason here — if there are tool_use
+    // blocks we MUST run them and produce paired tool_result blocks,
+    // otherwise the conversation becomes unbalanced and future API calls
+    // reject with "tool_use ids without tool_result".)
+    if (toolUses.length === 0) {
       break;
     }
 
-    // Run tools, append results.
+    // Run tools, append results. ALWAYS run every tool_use we received.
     const toolResults = [];
     for (const tu of toolUses) {
       toolCalls += 1;
@@ -114,43 +133,57 @@ export async function runTurn({ userMessage, session, draft, repoRoot, uploadsSt
         is_error: result.is_error,
       });
       if (tu.name === "propose_change" && !result.is_error) {
-        proposeResult = JSON.parse(result.content);
+        try { proposeResult = JSON.parse(result.content); }
+        catch { /* should not happen — runTool always JSON.stringifies */ }
       }
     }
     messages.push({ role: "user", content: toolResults });
 
-    // If propose_change ran, we stop the loop — the client must confirm
-    // before any further work happens.
+    // If propose_change ran, the agent is done with this turn — the
+    // client must confirm before any more tools fire. We do NOT make a
+    // second API call (that risks more tool_use blocks we'd have to
+    // discard); instead we surface the propose_change summary directly
+    // as the assistant text the UI renders.
     if (proposeResult) {
-      // Let the model produce one final assistant text after the tool result
-      // so the chat has the right "I'll do X, confirm?" message rendered.
-      const finalResp = await client.messages.create({
-        model: MODEL,
-        max_tokens: 1024,
-        system: systemBlocks,
-        tools: TOOL_DEFINITIONS,
-        messages,
-      });
-      if (finalResp.usage) {
-        totalTokens += (finalResp.usage.input_tokens || 0) + (finalResp.usage.output_tokens || 0);
-      }
-      messages.push({ role: "assistant", content: finalResp.content });
-      const lastText = finalResp.content.find(b => b.type === "text");
-      if (lastText) assistantTextOut = lastText.text;
+      assistantTextOut = proposeResult.summary_cs || assistantTextOut;
       break;
     }
   }
 
   return {
     assistantText: assistantTextOut,
-    messages,
+    messages: sanitizeMessages(messages),
     proposeResult,
     budget: { tokens: totalTokens, toolCalls, wallMs: Date.now() - startedAt },
   };
 }
 
+// Trim any tool_use blocks at the very tail that aren't followed by a
+// corresponding tool_result, so we never persist an unbalanced state.
+// Returns a defensive copy.
+function sanitizeMessages(messages) {
+  if (messages.length === 0) return messages;
+  const out = messages.slice();
+  // Walk back from the end, dropping trailing assistant tool_use that
+  // isn't paired with a user tool_result.
+  while (out.length > 0) {
+    const last = out[out.length - 1];
+    if (last.role !== "assistant" || !Array.isArray(last.content)) break;
+    const hasUnpairedToolUse = last.content.some(b => b.type === "tool_use");
+    const nextIsResults = false;   // last is the final entry, so by definition no next
+    if (hasUnpairedToolUse && !nextIsResults) {
+      out.pop();
+      continue;
+    }
+    break;
+  }
+  return out;
+}
+
 function budgetError(kind, limit) {
   const err = new Error(`Per-turn budget exceeded: ${kind} > ${limit}`);
   err.code = "BUDGET_EXCEEDED";
+  err.budgetKind = kind;
+  err.budgetLimit = limit;
   return err;
 }

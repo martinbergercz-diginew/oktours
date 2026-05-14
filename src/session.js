@@ -44,6 +44,13 @@ export async function getSession(sessionId = DEFAULT_SESSION_ID) {
   return all[sessionId];
 }
 
+export async function resetMessages(sessionId = DEFAULT_SESSION_ID) {
+  const session = await getSession(sessionId);
+  session.messages = [];
+  session.uiLog.push({ kind: "system", text: "Konverzace vyresetována.", at: new Date().toISOString() });
+  await persist();
+}
+
 export async function appendMessage(sessionId, message) {
   const session = await getSession(sessionId);
   session.messages.push(message);

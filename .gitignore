@@ -7,3 +7,4 @@ data/rate-limit.json
 .env
 .env.local
 *.log
+.env.*

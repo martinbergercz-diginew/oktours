@@ -30,7 +30,7 @@ export const TOOL_DEFINITIONS = [
   },
   {
     name: "write_file",
-    description: "Stage a file write into the in-memory draft. Does NOT touch disk or git until propose_change is confirmed by the client. Overwrites in the draft if called twice on the same path.",
+    description: "Stage a full-file write into the in-memory draft. Use ONLY when you're creating a new file or replacing most of the content. For small edits (changing a word, a paragraph, a single tag), use edit_text_in_file instead — it's far more efficient. Does NOT touch disk until propose_change is confirmed.",
     input_schema: {
       type: "object",
       properties: {
@@ -38,6 +38,19 @@ export const TOOL_DEFINITIONS = [
         content: { type: "string" },
       },
       required: ["path", "content"],
+    },
+  },
+  {
+    name: "edit_text_in_file",
+    description: "Replace one exact substring in a file with another. Preferred over write_file for small edits — you don't need to resend the whole file. The old_text must appear EXACTLY ONCE in the file (or fewer characters fail the call). The new_text replaces it. Stages into the in-memory draft like write_file. Use this for typos, single-word changes, removing or adding a tag, swapping a phone number, etc.",
+    input_schema: {
+      type: "object",
+      properties: {
+        path: { type: "string" },
+        old_text: { type: "string", description: "The exact substring to find. Must match a single occurrence in the file." },
+        new_text: { type: "string", description: "What to replace it with. May be empty to delete." },
+      },
+      required: ["path", "old_text", "new_text"],
     },
   },
   {
@@ -125,6 +138,7 @@ async function dispatch(name, input, ctx) {
     case "list_files": return await toolListFiles(input, ctx);
     case "read_file":  return await toolReadFile(input, ctx);
     case "write_file": return toolWriteFile(input, ctx);
+    case "edit_text_in_file": return await toolEditText(input, ctx);
     case "delete_file": return toolDeleteFile(input, ctx);
     case "list_pages": return toolListPages(ctx);
     case "translate":  return await toolTranslate(input, ctx);
@@ -162,6 +176,41 @@ function toolWriteFile({ path: relPath, content }, { repoRoot, draft }) {
   }
   draft.writes[relPath] = content;
   return { staged: true, path: relPath, bytes: Buffer.byteLength(content, "utf8") };
+}
+
+async function toolEditText({ path: relPath, old_text, new_text }, { repoRoot, draft }) {
+  assertWritable(repoRoot, relPath);
+  if (typeof old_text !== "string" || typeof new_text !== "string") {
+    throw new Error("edit_text_in_file: old_text and new_text must be strings.");
+  }
+  if (old_text === "") {
+    throw new Error("edit_text_in_file: old_text cannot be empty (use write_file to create a new file).");
+  }
+  // Source of truth: if the draft already has a staged write for this path,
+  // edit against that. Otherwise, read from disk.
+  let current;
+  if (Object.prototype.hasOwnProperty.call(draft.writes, relPath)) {
+    current = draft.writes[relPath];
+  } else {
+    const abs = resolveRepoPath(repoRoot, relPath);
+    current = await fs.readFile(abs, "utf8");
+  }
+  // Count occurrences — must be exactly one to avoid ambiguity.
+  const parts = current.split(old_text);
+  if (parts.length === 1) {
+    throw new Error(`edit_text_in_file: old_text not found in ${relPath}. Re-read the file to see the exact current content.`);
+  }
+  if (parts.length > 2) {
+    throw new Error(`edit_text_in_file: old_text appears ${parts.length - 1} times in ${relPath}. Make it more specific (include more surrounding context) so it matches exactly once.`);
+  }
+  const updated = parts[0] + new_text + parts[1];
+  draft.writes[relPath] = updated;
+  return {
+    staged: true,
+    path: relPath,
+    bytes_before: Buffer.byteLength(current, "utf8"),
+    bytes_after: Buffer.byteLength(updated, "utf8"),
+  };
 }
 
 function toolDeleteFile({ path: relPath }, { repoRoot, draft }) {

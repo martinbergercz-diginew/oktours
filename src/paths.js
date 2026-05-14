@@ -86,12 +86,13 @@ export function resolveRepoPath(repoRoot, relative) {
   if (!absolute.startsWith(repoRootResolved + path.sep) && absolute !== repoRootResolved) {
     throw new PathError(`Path escapes repo root: ${relative}`);
   }
-  // Reject if any segment is a symlink pointing outside the repo. We use
-  // lstat to check the leaf; full resolution is handled by realpathSync if
-  // the file exists.
+  // Reject if any segment resolves through a symlink to outside the repo.
+  // Compare realpaths on BOTH sides so symlinked roots (e.g. /tmp →
+  // /private/tmp on macOS) don't falsely trip this.
   if (fs.existsSync(absolute)) {
+    const realRoot = fs.realpathSync(repoRootResolved);
     const real = fs.realpathSync(absolute);
-    if (!real.startsWith(repoRootResolved + path.sep) && real !== repoRootResolved) {
+    if (!real.startsWith(realRoot + path.sep) && real !== realRoot) {
       throw new PathError(`Symlink escapes repo root: ${relative}`);
     }
   }

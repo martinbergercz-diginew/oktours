@@ -312,6 +312,22 @@ async function refreshState() {
 
 historyToggleEl.onclick = () => historyEl.classList.toggle("open");
 
+const resetBtn = document.getElementById("reset-conversation");
+if (resetBtn) {
+  resetBtn.onclick = async () => {
+    if (!confirm("Vyresetovat konverzaci? Historie chatu se smaže (úpravy na webu zůstanou).")) return;
+    try {
+      await api("/admin/api/reset-conversation", { method: "POST", body: {} });
+      messagesEl.innerHTML = "";
+      delete messagesEl.dataset.replayed;
+      bubble("system", "Konverzace vyresetována. Můžeš začít znovu.");
+      refreshState();
+    } catch (err) {
+      showError(err.message);
+    }
+  };
+}
+
 inputEl.addEventListener("keydown", (ev) => {
   if (ev.key === "Enter" && !ev.shiftKey) {
     ev.preventDefault();

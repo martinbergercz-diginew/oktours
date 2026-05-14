@@ -14,7 +14,7 @@ import { notifyPublish } from "./ops/mailer.js";
 import { handleUpload } from "./ops/upload.js";
 import { loadDraft, saveDraft, clearDraft, emptyDraft, isDraftEmpty } from "./draft.js";
 import {
-  getSession, appendMessage, appendUiEntry, bumpCounter, checkRateLimit,
+  getSession, appendMessage, appendUiEntry, bumpCounter, checkRateLimit, resetMessages,
 } from "./session.js";
 import { UploadsStore } from "./uploads-store.js";
 
@@ -164,9 +164,11 @@ fastify.post("/admin/api/chat", async (req, reply) => {
   } catch (err) {
     if (err.code === "BUDGET_EXCEEDED") {
       await clearDraft(session.sessionId);
+      const detail = err.budgetKind ? ` (${err.budgetKind} > ${err.budgetLimit})` : "";
+      fastify.log.warn({ kind: err.budgetKind, limit: err.budgetLimit }, "Per-turn budget exceeded");
       return reply.send({
         kind: "error",
-        text: "Tahle změna byla moc velká na jeden krok. Zkus ji rozdělit na menší kousky.",
+        text: `Tahle změna byla moc velká na jeden krok${detail}. Zkus ji rozdělit na menší kousky, nebo napiš Martinovi.`,
       });
     }
     fastify.log.error({ err }, "Chat turn failed");
@@ -231,6 +233,15 @@ fastify.post("/admin/api/confirm", async (req, reply) => {
     fastify.log.error({ err }, "Confirm failed");
     return reply.code(500).send({ error: err.message });
   }
+});
+
+// Reset conversation — clears messages history (UI log + draft preserved unless
+// the client also undoes staging). Used to recover from a corrupted state.
+fastify.post("/admin/api/reset-conversation", async () => {
+  const session = await getSession();
+  await resetMessages(session.sessionId);
+  await clearDraft(session.sessionId);
+  return { ok: true };
 });
 
 // Cancel — client clicked "No, cancel". Discards the draft.

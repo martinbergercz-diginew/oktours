@@ -24,10 +24,44 @@ export class GitOps {
   }
 
   async ensureBranches() {
-    await this.git.fetch();
+    await this.git.fetch().catch(() => {});   // ignore offline
     const branches = await this.git.branchLocal();
     if (!branches.all.includes("staging")) {
       await this.git.checkoutBranch("staging", "main");
+    }
+  }
+
+  /**
+   * Stash uncommitted work outside ok-tours/ before doing any branch ops.
+   * Used in local dev where the developer's WIP shouldn't block the admin
+   * flow. Returns a token usable to restore the stash; null if nothing
+   * stashed.
+   */
+  async stashNonContentChanges() {
+    const status = await this.git.status();
+    // Only stash if there are uncommitted changes outside the ok-tours/ subdir
+    // — that's what could collide with branch switching. ok-tours/ itself
+    // is the canvas the admin service operates on.
+    const dirtyOutsideContent = status.files.some(f => !f.path.startsWith(REPO_SUBDIR + "/"));
+    if (!dirtyOutsideContent) return null;
+    const label = `oktours-admin-autostash-${Date.now()}`;
+    await this.git.raw(["stash", "push", "--include-untracked", "-m", label]);
+    return label;
+  }
+
+  async restoreStash(label) {
+    if (!label) return;
+    // Pop the most recent stash if it matches our label.
+    try {
+      const list = await this.git.raw(["stash", "list"]);
+      const line = list.split("\n").find(l => l.includes(label));
+      if (!line) return;
+      const idx = line.match(/^stash@\{(\d+)\}/)?.[1];
+      if (idx === undefined) return;
+      await this.git.raw(["stash", "pop", `stash@{${idx}}`]);
+    } catch (err) {
+      // If pop conflicts, leave it stashed and surface a warning.
+      console.warn(`Could not auto-pop stash ${label}: ${err.message}`);
     }
   }
 
@@ -43,6 +77,18 @@ export class GitOps {
       throw new Error("Draft is empty — nothing to commit.");
     }
 
+    // In local dev the developer's pending source edits to admin-service/
+    // would block git checkout. Stash them so the admin flow can proceed.
+    const stashLabel = await this.stashNonContentChanges();
+
+    try {
+      return await this._applyDraftInner(draft);
+    } finally {
+      await this.restoreStash(stashLabel);
+    }
+  }
+
+  async _applyDraftInner(draft) {
     // Sync main first, then base staging on main.
     await this.git.checkout("main");
     await this.git.pull("origin", "main", ["--rebase"]).catch(() => {});
@@ -101,6 +147,15 @@ export class GitOps {
    * which receives the shadow path and returns { ok, failures }.
    */
   async publishWithSmoke(smokeCheck) {
+    const stashLabel = await this.stashNonContentChanges();
+    try {
+      return await this._publishWithSmokeInner(smokeCheck);
+    } finally {
+      await this.restoreStash(stashLabel);
+    }
+  }
+
+  async _publishWithSmokeInner(smokeCheck) {
     const ahead = await this.stagingAheadOfMain();
     if (ahead === 0) {
       throw new Error("Nothing to publish — staging is the same as main.");
@@ -153,6 +208,15 @@ export class GitOps {
    * Does NOT merge or push (main is already authoritative).
    */
   async redeployMain(smokeCheck) {
+    const stashLabel = await this.stashNonContentChanges();
+    try {
+      return await this._redeployMainInner(smokeCheck);
+    } finally {
+      await this.restoreStash(stashLabel);
+    }
+  }
+
+  async _redeployMainInner(smokeCheck) {
     await this.git.checkout("main");
     await this.git.pull("origin", "main", ["--rebase"]).catch(() => {});
 
@@ -189,10 +253,18 @@ export class GitOps {
   }
 
   async undoStaging() {
-    await this.git.checkout("staging");
-    await this.git.reset(["--hard", "origin/main"]);
-    if (!this.dryRun) await this.git.push("origin", "staging", ["--force"]);
-    await this.rsync(path.join(this.repoRoot, REPO_SUBDIR), this.stagingPath);
+    const stashLabel = await this.stashNonContentChanges();
+    try {
+      await this.git.checkout("staging");
+      await this.git.reset(["--hard", "origin/main"]).catch(async () => {
+        // No origin/main in local dev; fall back to local main.
+        await this.git.reset(["--hard", "main"]);
+      });
+      if (!this.dryRun) await this.git.push("origin", "staging", ["--force"]);
+      await this.rsync(path.join(this.repoRoot, REPO_SUBDIR), this.stagingPath);
+    } finally {
+      await this.restoreStash(stashLabel);
+    }
   }
 
   async revertCommit(commitHash) {
