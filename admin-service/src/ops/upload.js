@@ -25,7 +25,7 @@ export async function handleUpload({ buffer, mimeType, originalName, repoRoot })
 
 async function handleImage({ buffer, originalName, repoRoot }) {
   const sanitized = sanitizeName(originalName, ".jpg");
-  const uploadsDir = path.join(repoRoot, "ok-tours", "uploads");
+  const uploadsDir = path.join(repoRoot, "uploads");
   await fs.mkdir(uploadsDir, { recursive: true });
   const finalName = await dedupeName(uploadsDir, sanitized);
   const finalPath = path.join(uploadsDir, finalName);
@@ -47,7 +47,7 @@ async function handleImage({ buffer, originalName, repoRoot }) {
 
 async function handlePdf({ buffer, originalName, repoRoot }) {
   const sanitized = sanitizeName(originalName, ".pdf");
-  const uploadsDir = path.join(repoRoot, "ok-tours", "uploads");
+  const uploadsDir = path.join(repoRoot, "uploads");
   await fs.mkdir(uploadsDir, { recursive: true });
   const finalName = await dedupeName(uploadsDir, sanitized);
   const finalPath = path.join(uploadsDir, finalName);

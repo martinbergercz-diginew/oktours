@@ -19,7 +19,14 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { isDraftEmpty } from "../draft.js";
 
-const REPO_SUBDIR = "ok-tours";
+// The site content lives at the repo root in the standalone `oktours`
+// repo (it used to be under `ok-tours/` in the old prototypes monorepo).
+// Empty string = repo root; path.join collapses it away.
+const REPO_SUBDIR = "";
+
+// The admin-service's own directory inside the repo. Never deployed,
+// never committed as part of a content change.
+const ADMIN_DIR = "admin-service";
 
 export class GitOps {
   constructor({
@@ -125,7 +132,10 @@ export class GitOps {
       await fs.rm(abs, { force: true });
     }
 
-    await this.git.add([REPO_SUBDIR]);
+    // Stage exactly the files this draft touched (adds, mods, deletes).
+    // `git add -A -- <paths>` records deletions too.
+    const touched = [...Object.keys(draft.writes), ...draft.deletes];
+    await this.git.add(["-A", "--", ...touched]);
     const status = await this.git.status();
     if (status.files.length === 0) {
       throw new Error("Nothing actually changed on disk — draft may already be applied.");
@@ -354,7 +364,10 @@ export class GitOps {
 
   async _stashNonContentChanges() {
     const status = await this.git.status();
-    const dirtyOutsideContent = status.files.some(f => !f.path.startsWith(REPO_SUBDIR + "/"));
+    // Content = the whole repo except the admin-service's own directory.
+    // Stash any dirt under admin-service/ so it never rides along with a
+    // client content commit.
+    const dirtyOutsideContent = status.files.some(f => f.path.startsWith(ADMIN_DIR + "/"));
     if (!dirtyOutsideContent) return null;
     const label = `oktours-admin-autostash-${Date.now()}`;
     await this.git.raw(["stash", "push", "--include-untracked", "-m", label]);
@@ -402,8 +415,10 @@ export class GitOps {
     await run("rsync", [
       "-a", "--delete",
       "--exclude=.git",
+      "--exclude=.gitignore",
       "--exclude=.claude",
       "--exclude=CLAUDE.md",
+      "--exclude=HANDOFF.md",
       "--exclude=ADMIN_CHAT_SPEC.md",
       "--exclude=SETUP_GA4.md",
       "--exclude=admin-service",

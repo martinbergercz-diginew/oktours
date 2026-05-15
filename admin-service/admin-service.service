@@ -6,14 +6,14 @@ After=network.target
 Type=simple
 User=oktours-admin
 Group=oktours-admin
-WorkingDirectory=/srv/oktours-repo/ok-tours/admin-service
+WorkingDirectory=/srv/oktours-repo/admin-service
 EnvironmentFile=/etc/oktours-admin.env
 ExecStart=/usr/bin/node src/server.js
 Restart=on-failure
 RestartSec=5
 NoNewPrivileges=yes
 ProtectSystem=strict
-ReadWritePaths=/srv/oktours-repo /var/www/oktours-staging /var/www/oktours-shadow /var/www/oktours-previous /var/www/oktours
+ReadWritePaths=/srv/oktours-repo /srv/admin-service /var/www/oktours-staging /var/www/oktours-shadow /var/www/oktours-previous /var/www/oktours
 PrivateTmp=yes
 
 [Install]

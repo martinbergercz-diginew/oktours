@@ -3,9 +3,14 @@
 Target: **Hetzner CX22 at `77.42.39.133`** (Ubuntu 24.04, hostname `oktours-prod`).
 Companion to [README.md](README.md) and the spec at [../ADMIN_CHAT_SPEC.md](../ADMIN_CHAT_SPEC.md).
 
-Total time: ~45 min. Most of it is one-time setup; updates after that take seconds.
+Total time: ~30 min. Most of it is one-time setup; updates after that take seconds.
 
 Each step has a **Why** line (so you can skip if you understand the rationale), the **Commands** to run, and a **Verify** check.
+
+> **Repo note.** The admin-service now lives in the dedicated **`oktours`** repo
+> (`github.com/martinbergercz-diginew/oktours`), not the old `prototypes`
+> monorepo. The static site is at the repo root; `admin-service/` is a
+> subdirectory. There is no `ok-tours/` prefix anymore.
 
 ---
 
@@ -17,7 +22,7 @@ Each step has a **Why** line (so you can skip if you understand the rationale), 
 - `oktours.diginew.cz` Caddy vhost serving `/var/www/oktours/`.
 - SSH access from your laptop as `root@77.42.39.133` using `~/.ssh/id_ed25519`.
 
-If any of those is false, fix it first via `ok-tours/CLAUDE.md` before proceeding.
+If any of those is false, fix it first via the repo-root `CLAUDE.md` before proceeding.
 
 ---
 
@@ -58,7 +63,7 @@ REMOTE
 
 ## Step 3 — Set up GitHub deploy key for `oktours-admin`
 
-**Why:** admin-service does `git push origin main` and `git push origin staging`. It needs auth that's scoped to JUST this one repo, not your personal account.
+**Why:** admin-service does `git push origin main` and `git push origin staging`. It needs auth that's scoped to JUST the `oktours` repo, not your personal account.
 
 ```bash
 ssh root@77.42.39.133 'bash -s' <<'REMOTE'
@@ -74,23 +79,24 @@ sudo -u oktours-admin -H bash -c '
 REMOTE
 ```
 
-**Take the printed `ssh-ed25519 …` line and add it as a deploy key:**
+**Add the printed `ssh-ed25519 …` line as a deploy key** — either via the CLI from your laptop:
 
-1. Open https://github.com/martinbergercz-diginew/prototypes/settings/keys/new
-2. Title: `oktours-admin (VPS)`
-3. Paste the key.
-4. **Check "Allow write access"** — required since the service pushes.
-5. Click "Add key".
+```bash
+gh repo deploy-key add /dev/stdin --repo martinbergercz-diginew/oktours \
+  --title "oktours-admin (VPS)" --allow-write <<< "PASTE_THE_PUBKEY_LINE"
+```
+
+…or in the web UI: https://github.com/martinbergercz-diginew/oktours/settings/keys/new — title `oktours-admin (VPS)`, paste the key, **check "Allow write access"**, Add key.
 
 **Verify the key works:**
 ```bash
 ssh root@77.42.39.133 "sudo -u oktours-admin -H ssh -i /srv/admin-service/.ssh/id_ed25519 -T git@github.com"
 ```
-Should print: `Hi martinbergercz-diginew/prototypes! You've successfully authenticated…`
+Should print: `Hi martinbergercz-diginew/oktours! You've successfully authenticated…`
 
 ---
 
-## Step 4 — Clone the monorepo
+## Step 4 — Clone the repo
 
 **Why:** admin-service edits files inside this clone. Each `commit_to_staging` runs `git pull --rebase` first to stay in sync with your laptop pushes.
 
@@ -98,14 +104,13 @@ Should print: `Hi martinbergercz-diginew/prototypes! You've successfully authent
 ssh root@77.42.39.133 'bash -s' <<'REMOTE'
 if [ ! -d /srv/oktours-repo/.git ]; then
   sudo -u oktours-admin -H bash -c '
-    git clone git@github.com:martinbergercz-diginew/prototypes.git /srv/oktours-repo
+    git clone git@github.com:martinbergercz-diginew/oktours.git /srv/oktours-repo
     cd /srv/oktours-repo
     git config user.name "OK TOURS admin"
     git config user.email "admin@oktours.cz"
     git branch staging main 2>/dev/null || true
   '
 fi
-# Newer git requires marking the dir as safe even when the owning user runs against it.
 sudo -u oktours-admin git -C /srv/oktours-repo log --oneline -1
 REMOTE
 ```
@@ -116,18 +121,18 @@ REMOTE
 
 ## Step 5 — Install admin-service dependencies
 
-**Why:** Production-only deps (`@anthropic-ai/sdk`, `sharp`, `simple-git`, etc.), no devDeps.
+**Why:** Production-only deps (`@anthropic-ai/sdk`, `sharp`, `simple-git`, `fastify`, …), no devDeps.
 
 ```bash
 ssh root@77.42.39.133 'bash -s' <<'REMOTE'
-cd /srv/oktours-repo/ok-tours/admin-service
+cd /srv/oktours-repo/admin-service
 sudo -u oktours-admin npm ci --omit=dev
 REMOTE
 ```
 
 **Verify:**
 ```bash
-ssh root@77.42.39.133 "ls /srv/oktours-repo/ok-tours/admin-service/node_modules/@anthropic-ai/sdk/package.json && echo OK"
+ssh root@77.42.39.133 "ls /srv/oktours-repo/admin-service/node_modules/@anthropic-ai/sdk/package.json && echo OK"
 ```
 
 ---
@@ -151,39 +156,45 @@ REMOTE
 ```bash
 ssh root@77.42.39.133 "ls -ld /var/www/oktours*"
 ```
-All four dirs should be owned by `oktours-admin:caddy` with `drwxr-x---` or similar.
+All four dirs should be owned by `oktours-admin:caddy`.
 
 ---
 
-## Step 7 — Generate the basic-auth password hash
+## Step 7 — Choose the two secrets
 
-**Why:** Caddy stores the password as a bcrypt hash. Same hash gates `/admin/` AND the staging vhost (§9).
+**Why:**
+- **`ADMIN_PASSWORD`** — the shared password the client types at `/admin/login`.
+  The login itself is handled by the admin-service (`src/auth.js`), not Caddy.
+- **`STAGING_PASSWORD` hash** — the staging preview is a plain file_server with
+  no app of its own, so Caddy basic-auth still gates it. Generate a bcrypt hash:
 
 ```bash
-read -s -p "Choose an admin password: " ADMIN_PASS
-ssh root@77.42.39.133 "caddy hash-password --plaintext '$ADMIN_PASS'"
-unset ADMIN_PASS
+read -s -p "Choose a staging-preview password: " STAGING_PASS
+ssh root@77.42.39.133 "caddy hash-password --plaintext '$STAGING_PASS'"
+unset STAGING_PASS
 ```
 
-Copy the printed `$2a$…` hash. You'll paste it into the Caddyfile in step 10.
+Copy the printed `$2a$…` hash for the Caddyfile in step 10. Pick the
+`ADMIN_PASSWORD` value now too — it goes in the env file in step 9.
 
 ---
 
-## Step 8 — Generate the redeploy token
+## Step 8 — Generate the secrets that need randomness
 
-**Why:** `POST /admin/api/redeploy-main` is gated by a shared-secret header, because Caddy basic-auth doesn't apply when you `curl localhost:3000` from the VPS itself.
+**Why:** `SESSION_SECRET` signs login cookies; `REDEPLOY_TOKEN` gates
+`POST /admin/api/redeploy-main` (Caddy auth doesn't apply to `curl localhost:3000`).
 
 ```bash
-ssh root@77.42.39.133 "openssl rand -hex 32"
+ssh root@77.42.39.133 "echo SESSION_SECRET=\$(openssl rand -hex 32); echo REDEPLOY_TOKEN=\$(openssl rand -hex 32)"
 ```
 
-Copy the printed value. You'll put it in `/etc/oktours-admin.env` next.
+Copy both values into `/etc/oktours-admin.env` in the next step.
 
 ---
 
 ## Step 9 — Create the production env file
 
-**Why:** systemd reads this file at boot. Owned by root with mode 600 so even other users on the box can't read the API key.
+**Why:** systemd reads this file at boot. Owned by root, mode 600, so even other users on the box can't read the API key.
 
 ```bash
 ssh root@77.42.39.133 'bash -s' <<'REMOTE'
@@ -205,14 +216,19 @@ LIVE_PATH=/var/www/oktours
 PREVIOUS_PATH=/var/www/oktours-previous
 DATA_DIR=/srv/admin-service/data
 
-STAGING_URL=https://oktours-staging.diginew.cz
-LIVE_URL=https://oktours.cz
+STAGING_URL=https://oktours.diginew.cz/_staging/
+LIVE_URL=https://oktours.diginew.cz/
 
 NOTIFY_EMAIL=martinbergercz@gmail.com
 SMTP_HOST=localhost
 SMTP_PORT=25
 MAIL_DOMAIN=oktours.cz
 
+# Admin login.
+ADMIN_PASSWORD=REPLACE_ME
+SESSION_SECRET=REPLACE_ME_FROM_STEP_8
+
+# Server-side redeploy hook (Martin's claude.ai flow).
 REDEPLOY_TOKEN=REPLACE_ME_FROM_STEP_8
 DRY_RUN=false
 ENV
@@ -222,12 +238,13 @@ chown root:root /etc/oktours-admin.env
 mkdir -p /srv/admin-service/data
 chown -R oktours-admin:oktours-admin /srv/admin-service
 
-# Now edit the two REPLACE_ME values:
 nano /etc/oktours-admin.env
 REMOTE
 ```
 
-Replace `sk-ant-REPLACE_ME` with your real Anthropic key and `REPLACE_ME_FROM_STEP_8` with the hex value from step 8. Save and exit (`Ctrl-O`, `Enter`, `Ctrl-X`).
+Replace the four `REPLACE_ME` values: the Anthropic key, `ADMIN_PASSWORD`
+(from step 7), and `SESSION_SECRET` + `REDEPLOY_TOKEN` (from step 8). Save
+and exit (`Ctrl-O`, `Enter`, `Ctrl-X`).
 
 **Verify:**
 ```bash
@@ -243,7 +260,7 @@ Should print `600 root:root /etc/oktours-admin.env`.
 
 ```bash
 ssh root@77.42.39.133 'bash -s' <<'REMOTE'
-cp /srv/oktours-repo/ok-tours/admin-service/admin-service.service /etc/systemd/system/oktours-admin.service
+cp /srv/oktours-repo/admin-service/admin-service.service /etc/systemd/system/oktours-admin.service
 systemctl daemon-reload
 systemctl enable --now oktours-admin
 sleep 2
@@ -255,24 +272,27 @@ REMOTE
 ```bash
 ssh root@77.42.39.133 "curl -s http://127.0.0.1:3000/admin/api/health"
 ```
-Should print: `{"ok":true,"dryRun":false,"repo":"/srv/oktours-repo","version":"0.1.0"}`
+Should print: `{"ok":true,"dryRun":false,"repo":"/srv/oktours-repo","version":"0.1.0","authEnabled":true}`
 
-If `dryRun` is true, your env file didn't apply — check `/etc/oktours-admin.env`.
+If `dryRun` is true or `authEnabled` is false, the env file didn't apply — check `/etc/oktours-admin.env`.
 
 ---
 
 ## Step 11 — Update Caddyfile
 
-**Why:** Two new vhosts/routes:
-- `/admin/*` on `oktours.cz` (or `oktours.diginew.cz` until cutover) → reverse-proxy to admin-service with basic auth.
-- `oktours-staging.diginew.cz` → file_server with basic auth + robots disallow.
+**Why:** Two new routes on the existing `oktours.diginew.cz` vhost:
+- `/admin/*` → reverse-proxy to admin-service. **No basic_auth** — the service
+  has its own shared-password login.
+- `/_staging/*` → file_server for the staging preview, behind basic_auth
+  (it's a plain static dir, no app of its own). Path-based, so it needs **no
+  extra DNS record**.
 
 Open the Caddyfile:
 ```bash
 ssh root@77.42.39.133 "nano /etc/caddy/Caddyfile"
 ```
 
-Find the existing block for `oktours.diginew.cz` (or `oktours.cz` if cutover is done) and add the `handle_path /admin/*` block. Then add the staging vhost. Example final structure:
+Edit the existing `oktours.diginew.cz` block so it looks like this:
 
 ```caddyfile
 oktours.diginew.cz {
@@ -281,12 +301,18 @@ oktours.diginew.cz {
         output file /var/log/caddy/access.log
     }
 
-    # NEW — admin chat UI + API.
-    handle_path /admin/* {
+    # NEW — admin chat UI + API. App-level login, no basic_auth here.
+    handle /admin/* {
+        reverse_proxy 127.0.0.1:3000
+    }
+
+    # NEW — staging preview. Plain file_server, so Caddy gates it.
+    handle_path /_staging/* {
         basic_auth {
             client PASTE_BCRYPT_HASH_FROM_STEP_7
         }
-        reverse_proxy 127.0.0.1:3000
+        root * /var/www/oktours-staging
+        file_server
     }
 
     # Existing PHP form handler.
@@ -301,92 +327,62 @@ oktours.diginew.cz {
         file_server
     }
 }
-
-# NEW — staging preview vhost. Behind same basic auth.
-oktours-staging.diginew.cz {
-    basic_auth {
-        client PASTE_BCRYPT_HASH_FROM_STEP_7
-    }
-    header /robots.txt Content-Type text/plain
-    respond /robots.txt "User-agent: *\nDisallow: /\n" 200
-    root * /var/www/oktours-staging
-    file_server
-}
 ```
 
-**Verify Caddyfile syntax, then reload:**
+> Note: `handle /admin/*` (not `handle_path`) — the admin-service expects the
+> full `/admin/...` path. `handle_path /_staging/*` *strips* the prefix so the
+> file_server sees plain `/index.html`.
+
+**Validate, then reload:**
 ```bash
 ssh root@77.42.39.133 "caddy validate --config /etc/caddy/Caddyfile && systemctl reload caddy"
 ```
 
 ---
 
-## Step 12 — DNS for staging subdomain
+## Step 12 — Initial staging deploy
 
-**Why:** `oktours-staging.diginew.cz` needs an A record so Caddy can serve TLS on it. Add at **web4u** (the registrar for `diginew.cz`):
-
-1. Log in to web4u admin.
-2. Open the DNS zone for `diginew.cz`.
-3. Add A record:
-   - Host: `oktours-staging`
-   - Type: A
-   - Value: `77.42.39.133`
-   - TTL: 300 (low for first 24h, then increase to 3600)
-4. Save.
-
-**Verify (wait ~5 min for propagation):**
-```bash
-dig +short oktours-staging.diginew.cz
-# → 77.42.39.133
-```
-
-**Verify TLS auto-issues:**
-```bash
-ssh root@77.42.39.133 "tail -20 /var/log/caddy/access.log"
-# Look for tls.handshake successful for oktours-staging.diginew.cz
-curl -I https://oktours-staging.diginew.cz/
-# Should return 401 Unauthorized (basic auth gate working).
-```
-
----
-
-## Step 13 — Initial staging deploy
-
-**Why:** The staging dir is currently empty. Seed it with the current `main` content so first preview works.
+**Why:** The staging dir is currently empty. Seed it with the current `main` content so the first preview works.
 
 ```bash
 ssh root@77.42.39.133 'bash -s' <<'REMOTE'
-curl -X POST -H "X-Admin-Token: $(grep ^REDEPLOY_TOKEN= /etc/oktours-admin.env | cut -d= -f2)" \
+curl -s -X POST -H "X-Admin-Token: $(grep ^REDEPLOY_TOKEN= /etc/oktours-admin.env | cut -d= -f2)" \
   http://127.0.0.1:3000/admin/api/redeploy-main
 REMOTE
 ```
 
 **Verify:**
-- `https://oktours-staging.diginew.cz/` (after basic auth) shows the current site.
-- `https://oktours.diginew.cz/admin/` (after basic auth) shows the chat UI.
+- `https://oktours.diginew.cz/_staging/` (after basic auth) shows the current site.
+- `https://oktours.diginew.cz/admin/` shows the login page.
 
 ---
 
-## Step 14 — First chat-driven edit (smoke test)
+## Step 13 — First chat-driven edit (smoke test)
 
 Open `https://oktours.diginew.cz/admin/` in your browser.
 
-1. Enter basic-auth credentials (user: `client`, password from step 7).
-2. Send: *"Změň text v hlavičce na 'Cestovní agentura OK TOURS Praha'"* (or something trivial).
+1. You land on the login page → enter `ADMIN_PASSWORD` (from step 7).
+2. You're now in the chat UI. Send something trivial, e.g.
+   *"Změň text v patičce na 'Cestovní agentura OK TOURS Praha'"*.
 3. Wait for Claude's confirmation prompt.
 4. Click **Ano, použít**.
-5. Click the staging preview link, verify the change.
+5. Click the staging preview link, enter the staging password, verify the change.
 6. Back in chat, click **Publikovat na živý web**.
 7. Open `https://oktours.diginew.cz/` in a private window — confirm the change is live.
 8. Check your inbox for the `[OK TOURS] …` email notification.
 
 If all 8 pass, MVP is in production.
 
+> Known minor glitch: the staging preview at `/_staging/` may show a missing
+> logo/favicon — `index.html` has two root-absolute links (`/logo.svg`,
+> `/apple-touch-icon.png`) that resolve against the domain root, not the
+> `/_staging/` prefix. Cosmetic, preview-only; the live site is unaffected.
+
 ---
 
 ## Updating Martin's workflow
 
-After this lands, **retire the manual rsync from `ok-tours/CLAUDE.md`**. To deploy your claude.ai edits:
+After this lands, **retire the manual rsync from the repo-root `CLAUDE.md`**. To deploy your claude.ai edits:
 
 ```bash
 # From your laptop, after `git push origin main`:
@@ -395,7 +391,7 @@ ssh root@77.42.39.133 \
         http://127.0.0.1:3000/admin/api/redeploy-main'
 ```
 
-Stick that in `ok-tours/scripts/deploy.sh` so it's a one-liner. The admin-service handles the smoke test, atomic swap, staging sync, and (eventually) screenshot capture.
+Stick that in `scripts/deploy.sh` so it's a one-liner. The admin-service handles the smoke test, atomic swap, and staging sync.
 
 ---
 
@@ -418,7 +414,7 @@ ssh root@77.42.39.133 "
 
 # Revert the systemd unit + Caddyfile additions if needed.
 ssh root@77.42.39.133 "systemctl disable oktours-admin && rm /etc/systemd/system/oktours-admin.service"
-# Then re-edit /etc/caddy/Caddyfile to remove the /admin/* handler and staging vhost, and `systemctl reload caddy`.
+# Then re-edit /etc/caddy/Caddyfile to remove the /admin/* and /_staging/* handlers, and `systemctl reload caddy`.
 ```
 
 The site is back to its pre-admin state. All data lives in `/srv/oktours-repo/.git` and is recoverable.
@@ -429,17 +425,16 @@ The site is back to its pre-admin state. All data lives in `/srv/oktours-repo/.g
 
 - **Logs:** `journalctl -u oktours-admin -f` (live), `journalctl -u oktours-admin --since=today` (today's events).
 - **Restart:** `systemctl restart oktours-admin`.
-- **Updating the service code:** `cd /srv/oktours-repo && sudo -u oktours-admin git pull && cd ok-tours/admin-service && sudo -u oktours-admin npm ci --omit=dev && systemctl restart oktours-admin`.
-- **Rotating the Anthropic key:** edit `/etc/oktours-admin.env`, `systemctl restart oktours-admin`.
-- **Rotating the redeploy token:** same. Update your laptop's `deploy.sh` afterwards.
-- **Disk usage:** `du -sh /srv/admin-service/data /var/www/oktours*` — screenshots and session history grow slowly; should stay well under 1 GB.
+- **Updating the service code:** `cd /srv/oktours-repo && sudo -u oktours-admin git pull && cd admin-service && sudo -u oktours-admin npm ci --omit=dev && systemctl restart oktours-admin`.
+- **Rotating the Anthropic key / admin password / secrets:** edit `/etc/oktours-admin.env`, then `systemctl restart oktours-admin`.
+- **Disk usage:** `du -sh /srv/admin-service/data /var/www/oktours*` — session history grows slowly; should stay well under 1 GB.
 
 ---
 
 ## After this is stable
 
 - [ ] Add a GitHub webhook so `git push origin main` automatically calls `/admin/api/redeploy-main` (replaces the manual SSH curl).
-- [ ] Switch staging URL from `oktours-staging.diginew.cz` to `staging.oktours.cz` after the `oktours.cz` cutover.
+- [ ] Move staging to its own subdomain (`staging.oktours.cz`) after the `oktours.cz` cutover, so preview links render identically to production.
 - [ ] Add Playwright screenshot capture (currently structural smoke only).
 - [ ] Add the "Request developer help" button for structural client asks.
-- [ ] Magic-link auth for two named users (Pavel Trejtnar + Marek Plášil) instead of shared password.
+- [ ] Per-user logins (Pavel Trejtnar + Marek Plášil) instead of one shared password.

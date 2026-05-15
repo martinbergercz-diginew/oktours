@@ -21,11 +21,47 @@ import {
   getSession, appendMessage, appendUiEntry, bumpCounter, checkRateLimit, resetMessages,
 } from "./session.js";
 import { UploadsStore } from "./uploads-store.js";
+import {
+  isAuthConfigured, checkPassword, issueToken,
+  isRequestAuthed, sessionCookie, clearCookie,
+} from "./auth.js";
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 const PORT = parseInt(process.env.PORT || "3000", 10);
 const HOST = process.env.HOST || "127.0.0.1";
 const DRY_RUN = process.env.DRY_RUN === "true";
+
+// --- Auth gate --------------------------------------------------------
+// The admin UI sits on the public internet, so it must not be open to
+// everyone. We require a shared-password login (see src/auth.js).
+//
+// Production (DRY_RUN=false) MUST have ADMIN_PASSWORD set — refuse to
+// start a public, login-less admin service. In local dev, if no password
+// is configured the gate is bypassed so `npm run dev` just works; set
+// ADMIN_PASSWORD in .env to exercise the real login flow locally.
+if (!DRY_RUN && !isAuthConfigured()) {
+  console.error("[auth] FATAL: ADMIN_PASSWORD is not set. Refusing to start a public admin service without a login.");
+  process.exit(1);
+}
+const AUTH_ENABLED = isAuthConfigured();
+const AUTH_SECURE = process.env.NODE_ENV === "production";
+if (!AUTH_ENABLED) {
+  console.warn("[auth] ADMIN_PASSWORD not set — login is BYPASSED (dev mode only).");
+}
+
+// Paths reachable without a session cookie: the login flow itself, the
+// health probe (called locally by the deploy runbook), and the
+// token-gated redeploy endpoint (it carries its own X-Admin-Token).
+const AUTH_EXEMPT = new Set([
+  "/admin/login",
+  "/admin/login.html",
+  "/admin/login.js",
+  "/admin/style.css",
+  "/admin/api/login",
+  "/admin/api/logout",
+  "/admin/api/health",
+  "/admin/api/redeploy-main",
+]);
 
 // Default to local dev paths if env vars unset.
 const dataDir = process.env.DATA_DIR || path.resolve(__dirname, "..", "data");
@@ -127,9 +163,50 @@ if (DRY_RUN) {
   });
 }
 
+// Auth gate — runs before every route. Anything under /admin that isn't
+// in AUTH_EXEMPT needs a valid session cookie.
+fastify.addHook("onRequest", async (req, reply) => {
+  if (!AUTH_ENABLED) return;                       // dev bypass
+  const pathOnly = req.url.split("?")[0];
+  if (!pathOnly.startsWith("/admin")) return;       // "/" redirect etc.
+  if (AUTH_EXEMPT.has(pathOnly)) return;
+  if (isRequestAuthed(req)) return;
+  if (pathOnly.startsWith("/admin/api/")) {
+    return reply.code(401).send({ error: "Nepřihlášeno.", login: true });
+  }
+  // A UI request from a browser without a session → show the login page.
+  return reply.redirect("/admin/login");
+});
+
+// Login page.
+fastify.get("/admin/login", async (req, reply) => {
+  if (AUTH_ENABLED && isRequestAuthed(req)) return reply.redirect("/admin/");
+  return reply.sendFile("login.html");
+});
+
+// Login — exchange the shared password for a session cookie.
+fastify.post("/admin/api/login", async (req, reply) => {
+  if (!isAuthConfigured()) {
+    return reply.code(503).send({ error: "Přihlášení není nakonfigurováno (chybí ADMIN_PASSWORD)." });
+  }
+  const { password } = req.body ?? {};
+  if (!checkPassword(password)) {
+    await new Promise(r => setTimeout(r, 600));    // slow down brute force
+    return reply.code(401).send({ error: "Nesprávné heslo." });
+  }
+  reply.header("set-cookie", sessionCookie(issueToken(), { secure: AUTH_SECURE }));
+  return { ok: true };
+});
+
+// Logout — clear the session cookie.
+fastify.post("/admin/api/logout", async (_req, reply) => {
+  reply.header("set-cookie", clearCookie({ secure: AUTH_SECURE }));
+  return { ok: true };
+});
+
 // Health.
 fastify.get("/admin/api/health", async () => ({
-  ok: true, dryRun: DRY_RUN, repo: REPO_PATH, version: "0.1.0",
+  ok: true, dryRun: DRY_RUN, repo: REPO_PATH, version: "0.1.0", authEnabled: AUTH_ENABLED,
 }));
 
 // Session bootstrap — returns chat history + pending state for resume.
@@ -318,7 +395,7 @@ fastify.post("/admin/api/publish", async (req, reply) => {
       clientPrompt: session.uiLog.slice(-10).filter(e => e.kind === "user").pop()?.text || "(?)",
       summary: session.uiLog.slice(-10).filter(e => e.kind === "staged").pop()?.summary || "(?)",
       commitHash: commit,
-      commitLink: `https://github.com/martinbergercz-diginew/prototypes/commit/${commit}`,
+      commitLink: `https://github.com/martinbergercz-diginew/oktours/commit/${commit}`,
       diff: "",   // TODO: include short diff
     }).catch(err => fastify.log.warn({ err }, "Email notify failed (non-fatal)"));
     return reply.send({ kind: "published", commit, liveUrl: LIVE_URL });

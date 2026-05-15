@@ -73,6 +73,11 @@ async function api(path, opts = {}) {
     headers: opts.body && !(opts.body instanceof FormData) ? { "content-type": "application/json" } : undefined,
     body: opts.body instanceof FormData ? opts.body : (opts.body ? JSON.stringify(opts.body) : undefined),
   });
+  if (res.status === 401) {
+    // Session expired or not logged in — bounce to the login page.
+    location.href = "/admin/login";
+    throw new Error("Přihlášení vypršelo. Přesměrovávám na přihlášení…");
+  }
   const ct = res.headers.get("content-type") || "";
   const data = ct.includes("json") ? await res.json() : await res.text();
   if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
@@ -325,6 +330,15 @@ if (resetBtn) {
     } catch (err) {
       showError(err.message);
     }
+  };
+}
+
+const logoutBtn = document.getElementById("logout");
+if (logoutBtn) {
+  logoutBtn.onclick = async () => {
+    try { await api("/admin/api/logout", { method: "POST", body: {} }); }
+    catch { /* logout is best-effort */ }
+    location.href = "/admin/login";
   };
 }
 

@@ -137,6 +137,44 @@ body {
   background: white; font-size: 22px; cursor: pointer;
 }
 
+/* Login screen */
+.login-screen {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100vh; padding: 20px;
+}
+.login-card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+  padding: 32px 28px; width: 100%; max-width: 340px;
+  display: flex; flex-direction: column;
+}
+.login-card h1 {
+  margin: 0; font-size: 22px; font-weight: 700; color: var(--brand);
+  letter-spacing: 0.04em; text-align: center;
+}
+.login-sub {
+  margin: 4px 0 24px; text-align: center; color: var(--ink-soft); font-size: 14px;
+}
+.login-card label {
+  font-size: 13px; color: var(--ink-soft); margin-bottom: 6px;
+}
+.login-card input {
+  font: inherit; padding: 10px 12px; border: 1px solid var(--line);
+  border-radius: 8px; margin-bottom: 16px;
+}
+.login-card input:focus {
+  outline: 2px solid var(--brand); outline-offset: -1px; border-color: var(--brand);
+}
+.login-card button {
+  font: inherit; font-weight: 600; padding: 10px 16px; cursor: pointer;
+  background: var(--brand); color: white; border: none; border-radius: 8px;
+}
+.login-card button:hover { background: #15473b; }
+.login-card button:disabled { opacity: 0.5; cursor: wait; }
+.login-error {
+  color: var(--warn); font-size: 13px; margin: 12px 0 0; min-height: 1em; text-align: center;
+}
+
 /* Mobile */
 @media (max-width: 800px) {
   .app { grid-template-columns: 1fr; }
