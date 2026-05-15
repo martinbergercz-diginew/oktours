@@ -92,6 +92,26 @@ export class GitOps {
       await this.git.reset(["--hard", this.publishedBranch]);
     }
 
+    // Safety net: reject if any write_file shrinks an existing file by
+    // more than 50%. Almost always a truncation bug (model summarized
+    // instead of preserving full content). The smoke test would catch
+    // this later but we'd rather refuse at commit time so the bad commit
+    // never lands on the staging branch.
+    for (const [relPath, newContent] of Object.entries(draft.writes)) {
+      const abs = path.join(this.repoRoot, REPO_SUBDIR, relPath);
+      let oldSize = 0;
+      try { oldSize = (await fs.stat(abs)).size; } catch { oldSize = 0; }
+      const newSize = Buffer.byteLength(newContent, "utf8");
+      if (oldSize > 0 && newSize < oldSize * 0.5) {
+        throw new Error(
+          `Refusing to commit: ${relPath} would shrink from ${oldSize} to ${newSize} bytes ` +
+          `(${Math.round((1 - newSize / oldSize) * 100)}% reduction). This is almost ` +
+          `always a truncation bug. If you really want to replace this file with much ` +
+          `smaller content, use edit_text_in_file to remove the unwanted sections instead.`
+        );
+      }
+    }
+
     // Apply writes.
     for (const [relPath, content] of Object.entries(draft.writes)) {
       const abs = path.join(this.repoRoot, REPO_SUBDIR, relPath);
