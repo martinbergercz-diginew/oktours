@@ -13,7 +13,9 @@ Restart=on-failure
 RestartSec=5
 NoNewPrivileges=yes
 ProtectSystem=strict
-ReadWritePaths=/srv/oktours-repo /srv/admin-service /var/www/oktours-staging /var/www/oktours-shadow /var/www/oktours-previous /var/www/oktours
+# /var/www (not just the oktours* subdirs) — publish atomically renames
+# directories inside it, which modifies /var/www itself.
+ReadWritePaths=/srv/oktours-repo /srv/admin-service /var/www
 PrivateTmp=yes
 
 [Install]
