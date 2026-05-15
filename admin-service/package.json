@@ -1,0 +1,24 @@
+{
+  "name": "oktours-admin-service",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Chat-driven admin for oktours.cz — see ../ADMIN_CHAT_SPEC.md",
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env --watch src/server.js",
+    "start": "node --env-file-if-exists=.env src/server.js",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.65.0",
+    "@fastify/multipart": "^9.0.1",
+    "@fastify/static": "^8.0.0",
+    "fastify": "^5.0.0",
+    "nodemailer": "^6.9.0",
+    "sharp": "^0.34.0",
+    "simple-git": "^3.27.0"
+  }
+}

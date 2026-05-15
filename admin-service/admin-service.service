@@ -1,0 +1,20 @@
+[Unit]
+Description=OK TOURS chat-driven admin service
+After=network.target
+
+[Service]
+Type=simple
+User=oktours-admin
+Group=oktours-admin
+WorkingDirectory=/srv/oktours-repo/ok-tours/admin-service
+EnvironmentFile=/etc/oktours-admin.env
+ExecStart=/usr/bin/node src/server.js
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=/srv/oktours-repo /var/www/oktours-staging /var/www/oktours-shadow /var/www/oktours-previous /var/www/oktours
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target
