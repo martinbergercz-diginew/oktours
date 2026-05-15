@@ -1,15 +1,17 @@
-# ok-tours
+# oktours
 
 **Live URL (temporary):** https://oktours.diginew.cz/
 **English version:** https://oktours.diginew.cz/index-en.html
 **Future URL (after client approval):** https://oktours.cz/
-**Part of:** `martinbergercz-diginew/prototypes` monorepo
+**GitHub repo:** `martinbergercz-diginew/oktours`
 
 ---
 
 ## What is OK Tours?
 
-Static HTML site for OK Tours corporate travel agency. Has Czech + English language versions, a subpage for long-term rentals (`dlouhodobe-pronajmy.html`), 5 legal PDFs in `docs/`, and a PHP-backed contact form (`send-mail.php`) that sends to `jiri.tlaskal@okhotels.cz` and `trejtnarova@okhotels.cz` via the server's local Postfix.
+Static HTML site for OK Tours corporate travel agency. Has Czech + English language versions, a subpage for long-term rentals (`dlouhodobe-pronajmy.html`), 5 legal PDFs in `docs/`, and a PHP-backed contact form (`send-mail.php`) that sends to `chumpitaz@oktours.cz` and `plasil@oktours.cz` via the server's local Postfix.
+
+This project lives in its own dedicated repo (history was extracted from the `prototypes` monorepo's `ok-tours/` subdirectory using `git subtree split`, preserving all 45 commits of edit history).
 
 ---
 
@@ -17,7 +19,7 @@ Static HTML site for OK Tours corporate travel agency. Has Czech + English langu
 - Static HTML + CSS (no build step, no React, no Vite)
 - One PHP file: `send-mail.php` (contact form handler, uses `mail()` via Postfix)
 - Caddy v2 + PHP-FPM 8.3 + Postfix on the server
-- Images: `image.png`, `logo_w.png`, `logo.svg`, hotel photos in `hotel_photos/`, legal logos in `logos/`
+- Images: `image.png`, `logo_w.png`, `logo.svg`, hotel photos in `hotel_photos/`, legal logos in `logos/`, team portraits in `team/`, section banners in `sections/`
 
 ---
 
@@ -28,30 +30,39 @@ Static HTML site for OK Tours corporate travel agency. Has Czech + English langu
 - `index-en.html` — English homepage
 - `dlouhodobe-pronajmy.html` — long-term rentals subpage
 - `send-mail.php` — contact form handler
+- `404.html` — custom branded 404 page
+- `robots.txt`, `sitemap.xml` — SEO basics
+- `og-image.jpg`, `apple-touch-icon.png`, `logo.svg` — share previews + favicons
 - `docs/*.pdf` — 5 legal PDFs (obchodní podmínky, GDPR, pojistka, IATA, koncesní listina)
 - `logos/ack-cr.png`, `logos/iata.png` — footer association logos
-- `hotel_photos/*.jpg` — carousel images
+- `hotel_photos/*.jpg` — carousel images for `dlouhodobe-pronajmy.html`
+- `team/*.jpg` — 4 leadership portraits
+- `sections/*.jpg` — section banner photos
 - Misc PNGs (icons, hero images)
 
 ### Internal (NOT deployed to production)
 - `offer.html` — internal client checklist
+- `offer-api.php`, `offer-state.json` — backing the offer.html state
 - `index-v1.html` — old version reference
 - `CLAUDE.md` — this file
 - `SETUP_GA4.md` — instructions for the next Claude session that wires up Google Analytics
 - `ADMIN_CHAT_SPEC.md` — design spec for a future chat-driven admin panel
-- `.claude/`, `offer-state.json`
+
+### Not in git (per-machine)
+- `.claude/` — per-machine Claude Code config
+- `team/_source/` — ~190 MB of original high-res photos before web compression. Kept locally as source material; never commit, never deploy.
 
 ---
 
 ## Git Workflow
 
-This project is part of a monorepo. After every change: **commit → push → deploy** (all three, every time).
+Standalone repo on `main`. After every change: **commit → push → deploy** (all three, every time).
 
-Run all git commands from the **repo root**:
+Run all git commands from the **repo root** (`/Users/martinberger/Documents/Prototypes/oktours/`):
 
 ```bash
-cd /Users/martinberger/Documents/Prototypes/prototypes
-git add ok-tours/
+cd /Users/martinberger/Documents/Prototypes/oktours
+git add .
 git commit -m "Description of changes"
 git push
 ```
@@ -67,10 +78,12 @@ Stack: Caddy + PHP-FPM 8.3 + Postfix. Files served from `/var/www/oktours/`.
 
 ### Quick deploy (one-liner)
 
-Run from the `ok-tours/` directory:
+Run from the repo root:
 
 ```bash
 rsync -avz --delete \
+  --exclude='.git' \
+  --exclude='.gitignore' \
   --exclude='.DS_Store' \
   --exclude='.claude' \
   --exclude='.last-deploy-marker' \
@@ -115,14 +128,14 @@ The site currently uses the staging domain in all SEO meta, canonical links, og:
 
 When ready to cut over:
 
-1. **Replace all references to the staging domain** (one find-and-replace across the whole `ok-tours/` directory):
+1. **Replace all references to the staging domain** (one find-and-replace across the whole repo):
 
    ```bash
-   cd /Users/martinberger/Documents/Prototypes/prototypes/ok-tours/
-   grep -rl "oktours.diginew.cz" . | xargs sed -i '' 's|oktours\.diginew\.cz|oktours.cz|g'
+   cd /Users/martinberger/Documents/Prototypes/oktours
+   grep -rl --exclude-dir=.git --exclude-dir=_source "oktours.diginew.cz" . | xargs sed -i '' 's|oktours\.diginew\.cz|oktours.cz|g'
    ```
 
-   Verify zero matches remain: `grep -r "diginew.cz" .` should be empty.
+   Verify zero matches remain: `grep -r --exclude-dir=.git --exclude-dir=_source "diginew.cz" .` should be empty.
 
 2. **Remove the noindex meta tag** from `index.html`, `index-en.html`, `dlouhodobe-pronajmy.html`. Search for the marker comment `<!-- TEMPORARY (staging on oktours.diginew.cz)` and delete the marker + the `<meta name="robots">` line beneath it (3 occurrences total).
 
@@ -142,4 +155,4 @@ When ready to cut over:
 
 ## Handoff
 
-Když Martin řekne "handoff" — napiš `HANDOFF.md` do **rootu repa** (ne do tohoto adresáře) s aktuálním stavem: co je hotovo, co je rozděláno, co je další krok, klíčové soubory. Auto-deploy hook to commitne a pushne automaticky. Viz root `CLAUDE.md` → sekce Handoff pro přesný formát.
+When Martin says "handoff" — write `HANDOFF.md` to the repo root with the current state: what's done, what's in progress, what's the next step, key files. The handoff file should be self-contained for the next session to pick up.

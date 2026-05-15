@@ -1,0 +1,8 @@
+.DS_Store
+**/.DS_Store
+.claude/
+.mcp.json
+node_modules/
+**/.last-deploy-marker
+# Source/original assets (large originals before web compression) — never deploy, never commit
+**/_source/
