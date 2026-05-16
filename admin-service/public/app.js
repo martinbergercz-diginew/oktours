@@ -67,6 +67,32 @@ function showError(text) {
   bubble("system", `⚠️ ${text}`);
 }
 
+// A "working…" bubble with a live elapsed-time counter and, after a few
+// seconds, a note about what's happening. Returns an object whose
+// .remove() clears the timer and removes the bubble.
+function thinkingBubble(label) {
+  const wrap = bubble("system", label);
+  const bub = wrap.querySelector(".bubble");
+  const labelNode = bub.firstChild;          // text node created by bubble()
+  const hint = document.createElement("div");
+  hint.className = "thinking-hint";
+  bub.appendChild(hint);
+  const startedAt = Date.now();
+  const tick = () => {
+    const s = Math.round((Date.now() - startedAt) / 1000);
+    labelNode.textContent = s > 0 ? `${label} · ${s} s` : `${label}…`;
+    if (s >= 4 && !hint.textContent) {
+      hint.textContent = "Čtu obsah stránek a připravuji úpravu — u větších změn to může trvat až minutu.";
+    }
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  };
+  tick();
+  const timer = setInterval(tick, 1000);
+  return {
+    remove() { clearInterval(timer); wrap.remove(); },
+  };
+}
+
 async function api(path, opts = {}) {
   const res = await fetch(path, {
     method: opts.method || "GET",
@@ -93,7 +119,7 @@ composerEl.addEventListener("submit", async (ev) => {
   sendEl.disabled = true;
 
   bubble("user", text);
-  const thinking = bubble("system", "Zpracovávám…");
+  const thinking = thinkingBubble("Zpracovávám změnu");
 
   try {
     const body = { text };
@@ -173,7 +199,7 @@ function handleResponse(resp, lastUserText) {
 
 // ---- Action handlers ----
 async function confirmDraft() {
-  const thinking = bubble("system", "Aplikuji na náhled…");
+  const thinking = thinkingBubble("Aplikuji na náhled");
   try {
     const resp = await api("/admin/api/confirm", { method: "POST", body: {} });
     thinking.remove();
@@ -190,7 +216,7 @@ async function cancelDraft() {
 }
 
 async function publishLive() {
-  const thinking = bubble("system", "Publikuji a kontroluji…");
+  const thinking = thinkingBubble("Publikuji a kontroluji");
   try {
     const resp = await api("/admin/api/publish", { method: "POST", body: {} });
     thinking.remove();

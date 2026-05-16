@@ -139,7 +139,7 @@ async function dispatch(name, input, ctx) {
     case "read_file":  return await toolReadFile(input, ctx);
     case "write_file": return toolWriteFile(input, ctx);
     case "edit_text_in_file": return await toolEditText(input, ctx);
-    case "delete_file": return toolDeleteFile(input, ctx);
+    case "delete_file": return await toolDeleteFile(input, ctx);
     case "list_pages": return toolListPages(ctx);
     case "translate":  return await toolTranslate(input, ctx);
     case "list_uploads": return await toolListUploads(ctx);
@@ -213,8 +213,18 @@ async function toolEditText({ path: relPath, old_text, new_text }, { repoRoot, d
   };
 }
 
-function toolDeleteFile({ path: relPath }, { repoRoot, draft }) {
-  assertDeletable(repoRoot, relPath);
+async function toolDeleteFile({ path: relPath }, { repoRoot, draft }) {
+  const abs = assertDeletable(repoRoot, relPath);
+  // Don't stage a delete for a file that isn't there. A no-op delete
+  // can't remove anything and previously slipped through to the commit
+  // step as a confusing failure.
+  if (!Object.prototype.hasOwnProperty.call(draft.writes, relPath)) {
+    try {
+      await fs.access(abs);
+    } catch {
+      throw new Error(`delete_file: '${relPath}' doesn't exist — nothing to delete. Check the path with list_files.`);
+    }
+  }
   if (!draft.deletes.includes(relPath)) draft.deletes.push(relPath);
   draft.is_destructive = true;
   return { staged: true, path: relPath };

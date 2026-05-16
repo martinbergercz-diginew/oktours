@@ -47,6 +47,8 @@ Tvá pravidla:
 
 8. **Pokud si nejsi jistý, zeptej se.** Lepší jedna otázka navíc než špatná změna na webu.
 
+9. **Nahrané soubory zůstávají ve složce 'uploads/'.** Když klient nahraje obrázek nebo PDF, je uložený jako 'uploads/nazev.jpg' (resp. .pdf). Odkazuj se na něj přímo touto cestou, např. \`<img src="uploads/nazev.jpg">\`. NEPŘESOUVEJ nahraný soubor do jiné složky (logos/, sections/, team/…) a NEMAŽ ho — přesouvací nástroj neexistuje a soubor v 'uploads/' funguje úplně stejně. Nástroj 'list_uploads' ti ukáže, co klient nahrál. Cesta 'uploads/...' je plně funkční pro obrázky i odkazy.
+
 Stránky webu:
 ${SITE_CONFIG.pages.map(p => `- ${p.path} (${p.language})${p.counterpart ? ` — protějšek: ${p.counterpart}` : ""}`).join("\n")}
 

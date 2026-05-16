@@ -132,10 +132,15 @@ export class GitOps {
       await fs.rm(abs, { force: true });
     }
 
-    // Stage exactly the files this draft touched (adds, mods, deletes).
-    // `git add -A -- <paths>` records deletions too.
-    const touched = [...Object.keys(draft.writes), ...draft.deletes];
-    await this.git.add(["-A", "--", ...touched]);
+    // Stage every content change in the repo: the draft's writes and
+    // deletes, plus any uploaded images/PDFs the client dropped into
+    // uploads/ (those live on disk untracked until a commit picks them
+    // up). admin-service/ is excluded so the service never commits its
+    // own code as part of a content edit. Staging by directory scope —
+    // rather than explicit per-file pathspecs — also means a draft that
+    // references a not-yet-existing path can't crash `git add` with
+    // "pathspec did not match any files".
+    await this.git.add(["-A", "--", ".", ":(exclude)admin-service"]);
     const status = await this.git.status();
     if (status.files.length === 0) {
       throw new Error("Nothing actually changed on disk — draft may already be applied.");
@@ -370,7 +375,10 @@ export class GitOps {
     const dirtyOutsideContent = status.files.some(f => f.path.startsWith(ADMIN_DIR + "/"));
     if (!dirtyOutsideContent) return null;
     const label = `oktours-admin-autostash-${Date.now()}`;
-    await this.git.raw(["stash", "push", "--include-untracked", "-m", label]);
+    // Scope the stash to admin-service/ only — never stash content dirt
+    // or pending uploads/, or they'd vanish from the working tree right
+    // when the commit needs them.
+    await this.git.raw(["stash", "push", "--include-untracked", "-m", label, "--", ADMIN_DIR]);
     return label;
   }
 
