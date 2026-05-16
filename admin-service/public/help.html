@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>OK TOURS — nápověda</title>
+  <style>
+    :root {
+      --bg: #f6f5f1; --panel: #fff; --ink: #1c1c1c; --soft: #555;
+      --line: #e4e2dc; --brand: #1f5f4f; --brand-soft: #e4efe9;
+      --warn: #b54a1f; --warn-soft: #fbe6da;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 15px; line-height: 1.6;
+    }
+    .wrap { max-width: 680px; margin: 0 auto; padding: 32px 22px 64px; }
+    header h1 { font-size: 22px; margin: 0 0 4px; color: var(--brand); }
+    header p { margin: 0 0 28px; color: var(--soft); }
+    h2 {
+      font-size: 17px; margin: 32px 0 10px; padding-bottom: 6px;
+      border-bottom: 2px solid var(--brand-soft);
+    }
+    p { margin: 8px 0; }
+    ol, ul { margin: 8px 0; padding-left: 22px; }
+    li { margin: 4px 0; }
+    code, .kbd {
+      background: var(--brand-soft); color: var(--brand);
+      padding: 1px 7px; border-radius: 5px; font-size: 0.92em;
+    }
+    /* mock UI snippets */
+    .shot {
+      background: var(--panel); border: 1px solid var(--line);
+      border-radius: 10px; padding: 16px; margin: 14px 0;
+    }
+    .shot-cap { font-size: 12px; color: var(--soft); margin: 6px 2px 0; font-style: italic; }
+    .bub { padding: 9px 13px; border-radius: 12px; margin: 6px 0; max-width: 85%; white-space: pre-wrap; }
+    .bub-user { background: var(--brand); color: #fff; margin-left: auto; border-bottom-right-radius: 4px; }
+    .bub-bot { background: #f0eee7; border-bottom-left-radius: 4px; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .btn {
+      font: inherit; font-size: 13px; padding: 7px 14px; border-radius: 999px;
+      border: 1px solid var(--line); background: #fff;
+    }
+    .btn-primary { background: var(--brand); color: #fff; border-color: var(--brand); }
+    .pill {
+      display: inline-block; font-size: 12px; padding: 5px 12px; border-radius: 999px;
+      border: 1px solid var(--brand); background: var(--brand-soft); color: var(--brand);
+    }
+    .pill.warn { border-color: var(--warn); background: var(--warn-soft); color: var(--warn); }
+    .hist {
+      font-size: 13px; border-left: 3px solid var(--brand-soft); padding: 4px 0 4px 12px;
+    }
+    .hist .meta { font-size: 11px; color: var(--soft); }
+    .hist .meta b { color: var(--brand); }
+    .can { background: var(--brand-soft); border-radius: 8px; padding: 12px 14px; margin: 10px 0; }
+    .cant { background: var(--warn-soft); border-radius: 8px; padding: 12px 14px; margin: 10px 0; }
+    .net { background: #eef3ff; border-radius: 8px; padding: 12px 14px; margin: 10px 0; }
+    .back { display: inline-block; margin-top: 28px; color: var(--brand); }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Nápověda — správa webu OK TOURS</h1>
+    <p>Jak upravovat web pomocí chatu.</p>
+  </header>
+
+  <p>Web upravuješ jednoduše: do chatu napíšeš obyčejnou češtinou, co chceš
+  změnit. Asistent úpravu připraví, ukáže ti, co se změní, a ty rozhodneš,
+  jestli ji použít.</p>
+
+  <h2>Jak upravit text nebo obrázek</h2>
+  <ol>
+    <li>Do políčka dole napiš, co chceš změnit.</li>
+    <li>Asistent připraví úpravu a ukáže ti <b>shrnutí</b>, co se změní.</li>
+    <li>Klikni <b>Ano, použít</b> — nebo <b>Ne, zrušit</b>.</li>
+    <li>Odkazem otevři <b>náhled</b> a změnu si zkontroluj.</li>
+    <li>Klikni <b>Publikovat na živý web</b> — a je to online.</li>
+  </ol>
+
+  <div class="shot">
+    <div class="bub bub-user">Změň telefon v patičce na 777 123 456.</div>
+    <div class="bub bub-bot">V patičce na české i anglické verzi se telefonní
+      číslo změní na <b>777 123 456</b>.
+      <div class="row">
+        <button class="btn btn-primary">Ano, použít</button>
+        <button class="btn">Ne, zrušit</button>
+      </div>
+    </div>
+  </div>
+  <p class="shot-cap">Takhle vypadá shrnutí změny s potvrzením.</p>
+
+  <h2>Náhled, nebo rovnou na web</h2>
+  <p>Přepínač vpravo nahoře určuje, co se stane po potvrzení:</p>
+  <ul>
+    <li><span class="pill">👁 Publikuji na náhled</span> — změna se nejdřív
+      ukáže jen tobě, na živý web ji pošleš ručně.</li>
+    <li><span class="pill warn">⚡ Publikuji rovnou na web</span> — po
+      potvrzení jde změna hned na web.</li>
+  </ul>
+
+  <h2>Potvrzování</h2>
+  <p>Druhý přepínač určuje, jestli se tě asistent před úpravou ptá:</p>
+  <ul>
+    <li><span class="pill">✋ Ptám se před změnou</span> — před každou
+      úpravou se zeptá.</li>
+    <li><span class="pill warn">⏩ Měním bez potvrzení</span> — úpravy
+      provede rovnou. (Mazání obsahu se pro jistotu potvrzuje vždy.)</li>
+  </ul>
+
+  <h2>Obrázky a dokumenty</h2>
+  <p>Tlačítkem <span class="kbd">+</span> vedle psacího pole nahraješ obrázek
+  nebo PDF. Potom napiš, kam ho na webu umístit.</p>
+
+  <h2>Historie a vrácení změny</h2>
+  <p>Vpravo je seznam <b>Historie změn</b> — kdo a kdy co upravil. U každé
+  změny je tlačítko <b>Vrátit tuto změnu</b>, kterým web vrátíš do stavu
+  před úpravou.</p>
+  <div class="shot">
+    <div class="hist">
+      <div class="meta">16. 5. 2026 9:14 · <b>vy@oktours.cz</b></div>
+      Změnit telefon v patičce
+      <div class="row"><button class="btn">Vrátit tuto změnu</button></div>
+    </div>
+  </div>
+
+  <h2>Co asistent umí a co ne</h2>
+  <p>Asistent má záměrně jasné hranice — abys nemohl/a omylem nic rozbít.</p>
+
+  <div class="can">
+    <b>✅ Umí:</b> měnit texty, vyměnit fotky a PDF, upravit kontaktní
+    údaje, přidat nebo ubrat člena týmu. Vždy upraví českou i anglickou
+    verzi.
+  </div>
+  <div class="cant">
+    <b>❌ Neumí — a slušně odmítne:</b>
+    <ul>
+      <li>měnit <b>vzhled</b> webu — barvy, rozložení stránek, písmo, nové
+        typy sekcí. To je práce pro vývojáře; asistent ti nabídne, že mu
+        pošle zprávu.</li>
+      <li>smazat hlavní stránky nebo právní dokumenty.</li>
+      <li>sáhnout na cokoli technického.</li>
+    </ul>
+  </div>
+  <div class="net">
+    <b>🛟 Bezpečnostní síť:</b> každou změnu vidíš ve shrnutí předem,
+    můžeš si ji prohlédnout na náhledu a kdykoli později vrátit zpět. Než
+    se cokoli zveřejní, web se automaticky zkontroluje, že je v pořádku.
+  </div>
+
+  <a class="back" href="/admin/">← Zpět do správy webu</a>
+</div>
+</body>
+</html>

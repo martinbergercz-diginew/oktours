@@ -50,9 +50,10 @@ body {
 .reset-link {
   background: transparent; border: 1px solid transparent; color: var(--ink-soft);
   font-size: 16px; line-height: 1; padding: 4px 8px; border-radius: 6px;
-  cursor: pointer;
+  cursor: pointer; text-decoration: none; display: inline-flex; align-items: center;
 }
 .reset-link:hover { border-color: var(--line); color: var(--ink); }
+#help-link { font-weight: 700; }
 
 .messages { flex: 1; min-height: 0; overflow-y: auto; padding: 24px 20px; }
 
