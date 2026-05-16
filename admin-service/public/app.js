@@ -410,7 +410,8 @@ async function refreshHistory() {
       const li = document.createElement("li");
       const when = new Date(c.date).toLocaleString("cs-CZ", { dateStyle: "short", timeStyle: "short" });
       li.innerHTML = `
-        <span class="when">${when} · ${c.short}</span>
+        <span class="when">${when}</span>
+        <span class="who">${escapeHtml(c.author || "—")}</span>
         <span class="msg-text">${escapeHtml(c.message)}</span>
         <button class="revert" data-commit="${c.hash}">Vrátit tuto změnu</button>
       `;

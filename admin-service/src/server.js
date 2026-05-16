@@ -518,7 +518,7 @@ fastify.post("/admin/api/confirm", async (req, reply) => {
 
   try {
     await gitOps.ensureBranches();
-    const { commit } = await gitOps.applyDraftToStaging(draft);
+    const { commit } = await gitOps.applyDraftToStaging(draft, req.user.email);
     await bumpCounter(session.sessionId, "commits_today");
     await clearDraft(session.sessionId);
     await appendUiEntry(session.sessionId, {
@@ -620,7 +620,7 @@ fastify.post("/admin/api/revert", async (req, reply) => {
   const { commit } = req.body ?? {};
   if (!commit) return reply.code(400).send({ error: "commit required" });
   try {
-    await gitOps.revertCommit(commit);
+    await gitOps.revertCommit(commit, req.user.email);
     return { ok: true };
   } catch (err) {
     return reply.code(400).send({ error: err.message });

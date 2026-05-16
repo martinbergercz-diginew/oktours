@@ -82,14 +82,14 @@ export class GitOps {
     }
   }
 
-  async applyDraftToStaging(draft) {
+  async applyDraftToStaging(draft, authorEmail) {
     if (isDraftEmpty(draft)) {
       throw new Error("Draft is empty — nothing to commit.");
     }
-    return this._withStash(() => this._applyDraftInner(draft));
+    return this._withStash(() => this._applyDraftInner(draft, authorEmail));
   }
 
-  async _applyDraftInner(draft) {
+  async _applyDraftInner(draft, authorEmail) {
     await this.ensureBranches();
     await this.syncPublishedRef();
 
@@ -147,11 +147,16 @@ export class GitOps {
     }
 
     const message = draft.commit_message || draft.summary_cs || "ok-tours: chat-driven update";
+    // Attribute the commit to the user who made the edit, so the change
+    // log can show who did what.
+    const commitOpts = {};
+    if (authorEmail) commitOpts["--author"] = `${authorEmail} <${authorEmail}>`;
     if (aheadBefore === 0) {
-      await this.git.commit(message);
+      await this.git.commit(message, commitOpts);
     } else {
-      // Squash: amend the pending staging commit.
-      await this.git.commit(message, ["--amend"]);
+      // Squash: amend the pending staging commit, re-attributing it to
+      // whoever made this latest edit.
+      await this.git.commit(message, { ...commitOpts, "--amend": null });
     }
 
     if (!this.dryRun) {
@@ -280,7 +285,7 @@ export class GitOps {
     });
   }
 
-  async revertCommit(commitHash) {
+  async revertCommit(commitHash, authorEmail) {
     return this._withStash(async () => {
       await this.ensureBranches();
       const log = await this.git.log({ maxCount: 200 }).catch(() => ({ all: [] }));
@@ -293,7 +298,9 @@ export class GitOps {
       await this.syncPublishedRef();
       await this.git.reset(["--hard", this.publishedBranch]);
 
-      await this.git.revert(commitHash, ["--no-edit"]);
+      const revertOpts = ["--no-edit"];
+      if (authorEmail) revertOpts.push(`--author=${authorEmail} <${authorEmail}>`);
+      await this.git.revert(commitHash, revertOpts);
 
       // Advance publishedBranch to include the revert.
       const newHead = (await this.git.revparse(["HEAD"])).trim();
