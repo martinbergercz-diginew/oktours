@@ -54,10 +54,29 @@ ${SITE_CONFIG.pages.map(p => `- ${p.path} (${p.language})${p.counterpart ? ` —
 
 Editovatelné složky: ${SITE_CONFIG.content_dirs.join(", ")}`;
 
-export async function runTurn({ userMessage, session, draft, repoRoot, uploadsStore, systemAdditions = [] }) {
+// Maps a tool call to a short, plain-Czech progress line shown live in
+// the chat UI while the turn runs.
+function toolStepText(name, input) {
+  switch (name) {
+    case "list_files": return "Prohlížím soubory webu";
+    case "list_pages": return "Zjišťuji stránky webu";
+    case "list_uploads": return "Kontroluji nahrané soubory";
+    case "read_file": return `Čtu stránku ${input?.path || ""}`.trim();
+    case "write_file": return `Připravuji soubor ${input?.path || ""}`.trim();
+    case "edit_text_in_file": return `Upravuji ${input?.path || ""}`.trim();
+    case "delete_file": return `Odstraňuji ${input?.path || ""}`.trim();
+    case "translate": return "Překládám text do druhého jazyka";
+    case "propose_change": return "Připravuji shrnutí změny";
+    default: return "Pracuji na změně";
+  }
+}
+
+export async function runTurn({ userMessage, session, draft, repoRoot, uploadsStore, systemAdditions = [], onEvent }) {
   const startedAt = Date.now();
   let totalTokens = 0;
   let toolCalls = 0;
+  const emit = typeof onEvent === "function" ? onEvent : () => {};
+  emit({ text: "Přemýšlím nad požadavkem" });
 
   // Defensively drop any trailing assistant message whose tool_use blocks
   // aren't followed by a matching tool_result user message. This prevents
@@ -127,6 +146,7 @@ export async function runTurn({ userMessage, session, draft, repoRoot, uploadsSt
     const toolResults = [];
     for (const tu of toolUses) {
       toolCalls += 1;
+      emit({ text: toolStepText(tu.name, tu.input) });
       const result = await runTool(tu.name, tu.input, ctx);
       toolResults.push({
         type: "tool_result",

@@ -1,27 +1,51 @@
 // Single-file vanilla JS chat app. Talks to /admin/api/*.
-// No framework. ~250 lines.
+// No framework.
 
-const $ = sel => document.querySelector(sel);
-const $$ = sel => Array.from(document.querySelectorAll(sel));
-
-const messagesEl = $("#messages");
-const composerEl = $("#composer");
-const inputEl = $("#input");
-const sendEl = $("#send");
-const uploadEl = $("#upload");
-const statePillEl = $("#state-pill");
-const historyListEl = $("#history-list");
-const historyEl = $("#history");
-const historyToggleEl = $("#history-toggle");
+const messagesEl = document.querySelector("#messages");
+const composerEl = document.querySelector("#composer");
+const inputEl = document.querySelector("#input");
+const sendEl = document.querySelector("#send");
+const uploadEl = document.querySelector("#upload");
+const statePillEl = document.querySelector("#state-pill");
+const historyListEl = document.querySelector("#history-list");
+const historyEl = document.querySelector("#history");
+const historyToggleEl = document.querySelector("#history-toggle");
+const publishToggleEl = document.querySelector("#publish-toggle");
 
 let pendingSquashChoice = null;
 
+// Publish mode: "preview" (edit → náhled → publish) or "direct" (edit →
+// straight to live). Persisted so it survives reloads.
+let publishMode = localStorage.getItem("oktours_publish_mode") || "preview";
+
+// ---- Markdown (tiny subset: the model uses **bold**, `code`, *italic*,
+// and "- " bullets — nothing else needs rendering) ----
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  })[c]);
+}
+
+function renderMarkdown(text) {
+  let html = escapeHtml(text);
+  html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
+  html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  html = html.replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>");
+  html = html.replace(/^[ \t]*[-*] +/gm, "• ");
+  return html;
+}
+
+// ---- Bubbles ----
 function bubble(role, text, opts = {}) {
   const wrap = document.createElement("div");
   wrap.className = `msg msg-${role}`;
   const bub = document.createElement("div");
   bub.className = "bubble";
-  bub.textContent = text;
+  if (role === "assistant") {
+    bub.innerHTML = renderMarkdown(text);
+  } else {
+    bub.textContent = text;
+  }
   wrap.appendChild(bub);
 
   if (opts.preview) {
@@ -37,7 +61,7 @@ function bubble(role, text, opts = {}) {
   if (opts.destructive) {
     const warn = document.createElement("div");
     warn.className = "destructive";
-    warn.textContent = `Tato akce viditelně odstraní obsah z živého webu. Opravdu to chceš udělat? Vrátit zpět to lze později, ale do té doby to návštěvníci uvidí.`;
+    warn.textContent = "Tato akce viditelně odstraní obsah z živého webu. Opravdu to chceš udělat? Vrátit zpět to lze později, ale do té doby to návštěvníci uvidí.";
     bub.appendChild(warn);
   }
 
@@ -67,32 +91,78 @@ function showError(text) {
   bubble("system", `⚠️ ${text}`);
 }
 
-// A "working…" bubble with a live elapsed-time counter and, after a few
-// seconds, a note about what's happening. Returns an object whose
-// .remove() clears the timer and removes the bubble.
+// A "working…" bubble: live elapsed-second counter + a growing list of
+// step lines streamed from the server. Returns { addStep, remove }.
 function thinkingBubble(label) {
   const wrap = bubble("system", label);
   const bub = wrap.querySelector(".bubble");
-  const labelNode = bub.firstChild;          // text node created by bubble()
-  const hint = document.createElement("div");
-  hint.className = "thinking-hint";
-  bub.appendChild(hint);
+  const labelNode = bub.firstChild;            // text node from bubble()
+  const stepsEl = document.createElement("div");
+  stepsEl.className = "thinking-steps";
+  bub.appendChild(stepsEl);
   const startedAt = Date.now();
   const tick = () => {
     const s = Math.round((Date.now() - startedAt) / 1000);
     labelNode.textContent = s > 0 ? `${label} · ${s} s` : `${label}…`;
-    if (s >= 4 && !hint.textContent) {
-      hint.textContent = "Čtu obsah stránek a připravuji úpravu — u větších změn to může trvat až minutu.";
-    }
-    messagesEl.scrollTop = messagesEl.scrollHeight;
   };
   tick();
   const timer = setInterval(tick, 1000);
   return {
+    addStep(text) {
+      const prev = stepsEl.lastElementChild;
+      if (prev) prev.classList.add("done");
+      const row = document.createElement("div");
+      row.className = "thinking-step";
+      row.textContent = text;
+      stepsEl.appendChild(row);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    },
     remove() { clearInterval(timer); wrap.remove(); },
   };
 }
 
+// ---- Styled confirm dialog (replaces window.confirm) ----
+function confirmDialog({ title, body, confirmLabel = "Potvrdit", cancelLabel = "Zrušit", danger = false }) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    const card = document.createElement("div");
+    card.className = "modal-card";
+
+    const h = document.createElement("h3");
+    h.className = "modal-title";
+    h.textContent = title;
+    const p = document.createElement("p");
+    p.className = "modal-body";
+    p.textContent = body;
+    const row = document.createElement("div");
+    row.className = "modal-btns";
+    const cancel = document.createElement("button");
+    cancel.className = "btn";
+    cancel.textContent = cancelLabel;
+    const ok = document.createElement("button");
+    ok.className = `btn ${danger ? "btn-warn" : "btn-primary"}`;
+    ok.textContent = confirmLabel;
+    row.append(cancel, ok);
+    card.append(h, p, row);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+
+    const close = (val) => {
+      overlay.remove();
+      document.removeEventListener("keydown", onKey);
+      resolve(val);
+    };
+    const onKey = (e) => { if (e.key === "Escape") close(false); };
+    cancel.onclick = () => close(false);
+    ok.onclick = () => close(true);
+    overlay.onclick = (e) => { if (e.target === overlay) close(false); };
+    document.addEventListener("keydown", onKey);
+    ok.focus();
+  });
+}
+
+// ---- API helpers ----
 async function api(path, opts = {}) {
   const res = await fetch(path, {
     method: opts.method || "GET",
@@ -100,7 +170,6 @@ async function api(path, opts = {}) {
     body: opts.body instanceof FormData ? opts.body : (opts.body ? JSON.stringify(opts.body) : undefined),
   });
   if (res.status === 401) {
-    // Session expired or not logged in — bounce to the login page.
     location.href = "/admin/login";
     throw new Error("Přihlášení vypršelo. Přesměrovávám na přihlášení…");
   }
@@ -108,6 +177,47 @@ async function api(path, opts = {}) {
   const data = ct.includes("json") ? await res.json() : await res.text();
   if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
   return data;
+}
+
+// Streaming chat: reads server-sent "step" events into the thinking
+// bubble and returns the final payload from the "done" event.
+async function sendChatStream(body, thinking) {
+  const res = await fetch("/admin/api/chat", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (res.status === 401) {
+    location.href = "/admin/login";
+    throw new Error("Přihlášení vypršelo.");
+  }
+  const ct = res.headers.get("content-type") || "";
+  if (!res.ok && !ct.includes("event-stream")) {
+    const d = ct.includes("json") ? await res.json().catch(() => ({})) : {};
+    throw new Error(d.error || `HTTP ${res.status}`);
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = "";
+  let final = null;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    let idx;
+    while ((idx = buf.indexOf("\n\n")) !== -1) {
+      const frame = buf.slice(0, idx);
+      buf = buf.slice(idx + 2);
+      const dataLine = frame.split("\n").find(l => l.startsWith("data:"));
+      if (!dataLine) continue;
+      let ev;
+      try { ev = JSON.parse(dataLine.slice(5).trim()); } catch { continue; }
+      if (ev.type === "step") thinking.addStep(ev.text);
+      else if (ev.type === "done") final = ev.payload;
+    }
+  }
+  if (!final) throw new Error("Spojení se serverem se přerušilo. Zkus to prosím znovu.");
+  return final;
 }
 
 // ---- Chat send ----
@@ -127,7 +237,7 @@ composerEl.addEventListener("submit", async (ev) => {
       body.squashChoice = pendingSquashChoice;
       pendingSquashChoice = null;
     }
-    const resp = await api("/admin/api/chat", { method: "POST", body });
+    const resp = await sendChatStream(body, thinking);
     thinking.remove();
     handleResponse(resp, text);
   } catch (err) {
@@ -157,19 +267,20 @@ function handleResponse(resp, lastUserText) {
       });
       break;
 
-    case "confirm_prompt":
+    case "confirm_prompt": {
+      const direct = publishMode === "direct";
+      let yesLabel;
+      if (direct) yesLabel = resp.is_destructive ? "Ano, odstranit a publikovat" : "Ano, publikovat na web";
+      else yesLabel = resp.is_destructive ? "Ano, odstranit" : "Ano, použít";
       bubble("assistant", resp.text, {
         destructive: resp.is_destructive,
         buttons: [
-          {
-            label: resp.is_destructive ? "Ano, odstranit" : "Ano, použít",
-            kind: resp.is_destructive ? "btn-warn" : "btn-primary",
-            onClick: confirmDraft,
-          },
+          { label: yesLabel, kind: resp.is_destructive ? "btn-warn" : "btn-primary", onClick: confirmDraft },
           { label: "Ne, zrušit", onClick: cancelDraft },
         ],
       });
       break;
+    }
 
     case "staged":
       bubble("assistant", resp.text, {
@@ -199,14 +310,39 @@ function handleResponse(resp, lastUserText) {
 
 // ---- Action handlers ----
 async function confirmDraft() {
-  const thinking = thinkingBubble("Aplikuji na náhled");
+  const direct = publishMode === "direct";
+  const thinking = thinkingBubble(direct ? "Publikuji na web" : "Aplikuji na náhled");
   try {
-    const resp = await api("/admin/api/confirm", { method: "POST", body: {} });
+    const staged = await api("/admin/api/confirm", { method: "POST", body: {} });
+    if (!direct) {
+      thinking.remove();
+      handleResponse({ kind: "staged", ...staged });
+      return;
+    }
+    // Direct mode — chain straight into publish.
+    thinking.addStep("Změna připravena, publikuji na web…");
+    const published = await api("/admin/api/publish", { method: "POST", body: {} });
     thinking.remove();
-    handleResponse({ kind: "staged", ...resp });
+    handleResponse({ kind: "published", ...published });
   } catch (err) {
     thinking.remove();
     showError(err.message);
+    // In direct mode the change may already be staged even though publish
+    // failed (e.g. smoke test) — surface the manual staged controls.
+    if (direct) {
+      try {
+        const s = await api("/admin/api/session");
+        if (s.stagingAhead > 0) {
+          bubble("assistant", "Změna je připravená na náhledu, ale publikace na web se nezdařila. Zkontroluj náhled a zkus publikovat ručně.", {
+            preview: s.stagingUrl,
+            buttons: [
+              { label: "Publikovat na živý web", kind: "btn-primary", onClick: publishLive },
+              { label: "Vrátit zpět", onClick: undoStaged },
+            ],
+          });
+        }
+      } catch { /* ignore */ }
+    }
   }
 }
 
@@ -238,7 +374,7 @@ uploadEl.addEventListener("change", async () => {
   const file = uploadEl.files?.[0];
   if (!file) return;
   bubble("user", `📎 ${file.name}`);
-  const thinking = bubble("system", "Nahrávám…");
+  const thinking = thinkingBubble("Nahrávám soubor");
   const fd = new FormData();
   fd.append("file", file);
   try {
@@ -270,7 +406,14 @@ async function refreshHistory() {
         <button class="revert" data-commit="${c.hash}">Vrátit tuto změnu</button>
       `;
       li.querySelector(".revert").onclick = async (ev) => {
-        if (!confirm(`Vrátit změnu "${c.message}"?`)) return;
+        const ok = await confirmDialog({
+          title: "Vrátit změnu?",
+          body: `Web se vrátí do stavu před úpravou „${c.message}". Tuto akci uvidí návštěvníci.`,
+          confirmLabel: "Vrátit změnu",
+          cancelLabel: "Ponechat",
+          danger: true,
+        });
+        if (!ok) return;
         ev.target.disabled = true;
         try {
           await api("/admin/api/revert", { method: "POST", body: { commit: c.hash } });
@@ -288,21 +431,15 @@ async function refreshHistory() {
   }
 }
 
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
-  })[c]);
-}
-
 async function refreshState() {
   try {
     const s = await api("/admin/api/session");
     if (s.stagingAhead > 0) {
-      statePillEl.textContent = `Náhled má 1 čekající změnu`;
+      statePillEl.textContent = "Náhled má 1 čekající změnu";
     } else if (s.draft) {
-      statePillEl.textContent = `Čeká na potvrzení`;
+      statePillEl.textContent = "Čeká na potvrzení";
     } else {
-      statePillEl.textContent = `Připraveno`;
+      statePillEl.textContent = "Připraveno";
     }
     // Replay UI log on first load (resume from prior session).
     if (!messagesEl.dataset.replayed && s.uiLog?.length) {
@@ -327,7 +464,7 @@ async function refreshState() {
           ],
         });
       } else if (s.stagingAhead > 0) {
-        bubble("assistant", `Na náhledu je 1 čekající úprava.`, {
+        bubble("assistant", "Na náhledu je 1 čekající úprava.", {
           preview: s.stagingUrl,
           buttons: [
             { label: "Publikovat", kind: "btn-primary", onClick: publishLive },
@@ -341,12 +478,36 @@ async function refreshState() {
   }
 }
 
+// ---- Publish-mode toggle ----
+function renderPublishToggle() {
+  const direct = publishMode === "direct";
+  publishToggleEl.textContent = direct ? "Publikuji rovnou na web" : "Publikuji na náhled";
+  publishToggleEl.classList.toggle("direct", direct);
+  publishToggleEl.title = direct
+    ? "Potvrzené změny se rovnou zveřejní na webu. Klikni pro režim s náhledem."
+    : "Potvrzené změny se nejdřív ukážou na náhledu. Klikni pro publikování rovnou na web.";
+}
+if (publishToggleEl) {
+  publishToggleEl.onclick = () => {
+    publishMode = publishMode === "direct" ? "preview" : "direct";
+    localStorage.setItem("oktours_publish_mode", publishMode);
+    renderPublishToggle();
+  };
+  renderPublishToggle();
+}
+
 historyToggleEl.onclick = () => historyEl.classList.toggle("open");
 
 const resetBtn = document.getElementById("reset-conversation");
 if (resetBtn) {
   resetBtn.onclick = async () => {
-    if (!confirm("Vyresetovat konverzaci? Historie chatu se smaže (úpravy na webu zůstanou).")) return;
+    const ok = await confirmDialog({
+      title: "Vyresetovat konverzaci?",
+      body: "Historie chatu se smaže. Úpravy už provedené na webu zůstanou beze změny.",
+      confirmLabel: "Vyresetovat",
+      cancelLabel: "Ponechat",
+    });
+    if (!ok) return;
     try {
       await api("/admin/api/reset-conversation", { method: "POST", body: {} });
       messagesEl.innerHTML = "";

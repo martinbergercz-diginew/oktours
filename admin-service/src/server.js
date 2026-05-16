@@ -239,91 +239,108 @@ fastify.get("/admin/api/session", async () => {
   };
 });
 
-// Chat — runs one Claude turn.
+// Chat — runs one Claude turn, streaming step-by-step progress to the UI
+// as Server-Sent Events. Frames:
+//   data: {"type":"step","text":"Čtu stránku index.html"}
+//   data: {"type":"done","payload":{ kind: ... }}      ← always the last frame
 fastify.post("/admin/api/chat", async (req, reply) => {
   const { text, squashChoice } = req.body ?? {};
   if (typeof text !== "string" || !text.trim()) {
     return reply.code(400).send({ error: "text required" });
   }
 
-  const session = await getSession();
-  let draft = await loadDraft(session.sessionId);
-  const systemAdditions = [];
-
-  // §3.2 squash-on-second-turn: if staging already has an unpublished
-  // commit AND no current draft, the client is starting a NEW edit while
-  // staging is dirty. We surface the choice in the UI first.
-  const stagingAhead = await gitOps.stagingAheadOfMain().catch(() => 0);
-  if (stagingAhead > 0 && !draft.awaiting_confirmation && isDraftEmpty(draft)) {
-    if (!squashChoice) {
-      return reply.send({
-        kind: "squash_prompt",
-        text: "Máš na náhledu neuveřejněnou úpravu. Chceš novou změnu přibalit k té stávající, nebo nejdřív tu starou zrušit?",
-        buttons: ["bundle", "undo_previous"],
-      });
-    }
-    if (squashChoice === "undo_previous") {
-      await gitOps.undoStaging();
-      await appendUiEntry(session.sessionId, { kind: "system", text: "Předchozí náhled zrušen." });
-    }
-    // 'bundle' falls through; the draft starts empty, gets applied as amend.
-  }
-
-  // Push uploads-pending into the system prompt.
-  const pending = await uploadsStore.list();
-  if (pending.length) {
-    const list = pending.map(u => `- ${u.path} (${u.kind}, ${u.size_kb} KB, "${u.original_name}")`).join("\n");
-    systemAdditions.push(`Klient nedávno nahrál tyto soubory (24h TTL):\n${list}\nPokud jsou relevantní k požadavku, použij je.`);
-  }
-
-  let turnResult;
-  try {
-    turnResult = await runTurn({
-      userMessage: text,
-      session,
-      draft,
-      repoRoot: path.join(REPO_PATH, ""),
-      uploadsStore,
-      systemAdditions,
-    });
-  } catch (err) {
-    if (err.code === "BUDGET_EXCEEDED") {
-      await clearDraft(session.sessionId);
-      const detail = err.budgetKind ? ` (${err.budgetKind} > ${err.budgetLimit})` : "";
-      fastify.log.warn({ kind: err.budgetKind, limit: err.budgetLimit }, "Per-turn budget exceeded");
-      return reply.send({
-        kind: "error",
-        text: `Tahle změna byla moc velká na jeden krok${detail}. Zkus ji rozdělit na menší kousky, nebo napiš Martinovi.`,
-      });
-    }
-    fastify.log.error({ err }, "Chat turn failed");
-    return reply.code(500).send({ error: err.message });
-  }
-
-  // Persist updated session messages and draft.
-  session.messages = turnResult.messages;
-  await appendMessage(session.sessionId, { role: "user", content: text });   // index log
-  await saveDraft(session.sessionId, draft);
-  await appendUiEntry(session.sessionId, { kind: "user", text });
-  await appendUiEntry(session.sessionId, { kind: "assistant", text: turnResult.assistantText });
-
-  // If the agent reached propose_change, surface the confirmation buttons.
-  if (turnResult.proposeResult) {
-    return reply.send({
-      kind: "confirm_prompt",
-      text: turnResult.assistantText,
-      summary_cs: turnResult.proposeResult.summary_cs,
-      is_destructive: turnResult.proposeResult.is_destructive,
-      affected_pages: turnResult.proposeResult.affected_pages,
-      budget: turnResult.budget,
-    });
-  }
-
-  return reply.send({
-    kind: "plain",
-    text: turnResult.assistantText,
-    budget: turnResult.budget,
+  // Hand the response over to a raw SSE stream.
+  reply.hijack();
+  reply.raw.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    "Connection": "keep-alive",
+    "X-Accel-Buffering": "no",
   });
+  const send = (obj) => {
+    try { reply.raw.write(`data: ${JSON.stringify(obj)}\n\n`); }
+    catch { /* client disconnected */ }
+  };
+  const finish = (payload) => { send({ type: "done", payload }); reply.raw.end(); };
+
+  try {
+    const session = await getSession();
+    const draft = await loadDraft(session.sessionId);
+    const systemAdditions = [];
+
+    // §3.2 squash-on-second-turn: if staging already has an unpublished
+    // commit AND no current draft, the client is starting a NEW edit while
+    // staging is dirty. We surface the choice in the UI first.
+    const stagingAhead = await gitOps.stagingAheadOfMain().catch(() => 0);
+    if (stagingAhead > 0 && !draft.awaiting_confirmation && isDraftEmpty(draft)) {
+      if (!squashChoice) {
+        return finish({
+          kind: "squash_prompt",
+          text: "Máš na náhledu neuveřejněnou úpravu. Chceš novou změnu přibalit k té stávající, nebo nejdřív tu starou zrušit?",
+          buttons: ["bundle", "undo_previous"],
+        });
+      }
+      if (squashChoice === "undo_previous") {
+        await gitOps.undoStaging();
+        await appendUiEntry(session.sessionId, { kind: "system", text: "Předchozí náhled zrušen." });
+      }
+      // 'bundle' falls through; the draft starts empty, gets applied as amend.
+    }
+
+    // Push uploads-pending into the system prompt.
+    const pending = await uploadsStore.list();
+    if (pending.length) {
+      const list = pending.map(u => `- ${u.path} (${u.kind}, ${u.size_kb} KB, "${u.original_name}")`).join("\n");
+      systemAdditions.push(`Klient nedávno nahrál tyto soubory (24h TTL):\n${list}\nPokud jsou relevantní k požadavku, použij je.`);
+    }
+
+    let turnResult;
+    try {
+      turnResult = await runTurn({
+        userMessage: text,
+        session,
+        draft,
+        repoRoot: path.join(REPO_PATH, ""),
+        uploadsStore,
+        systemAdditions,
+        onEvent: (ev) => send({ type: "step", text: ev.text }),
+      });
+    } catch (err) {
+      if (err.code === "BUDGET_EXCEEDED") {
+        await clearDraft(session.sessionId);
+        const detail = err.budgetKind ? ` (${err.budgetKind} > ${err.budgetLimit})` : "";
+        fastify.log.warn({ kind: err.budgetKind, limit: err.budgetLimit }, "Per-turn budget exceeded");
+        return finish({
+          kind: "error",
+          text: `Tahle změna byla moc velká na jeden krok${detail}. Zkus ji rozdělit na menší kousky, nebo napiš Martinovi.`,
+        });
+      }
+      fastify.log.error({ err }, "Chat turn failed");
+      return finish({ kind: "error", text: err.message });
+    }
+
+    // Persist updated session messages and draft.
+    session.messages = turnResult.messages;
+    await appendMessage(session.sessionId, { role: "user", content: text });   // index log
+    await saveDraft(session.sessionId, draft);
+    await appendUiEntry(session.sessionId, { kind: "user", text });
+    await appendUiEntry(session.sessionId, { kind: "assistant", text: turnResult.assistantText });
+
+    if (turnResult.proposeResult) {
+      return finish({
+        kind: "confirm_prompt",
+        text: turnResult.assistantText,
+        summary_cs: turnResult.proposeResult.summary_cs,
+        is_destructive: turnResult.proposeResult.is_destructive,
+        affected_pages: turnResult.proposeResult.affected_pages,
+        budget: turnResult.budget,
+      });
+    }
+    return finish({ kind: "plain", text: turnResult.assistantText, budget: turnResult.budget });
+  } catch (err) {
+    fastify.log.error({ err }, "Chat stream failed");
+    try { finish({ kind: "error", text: err.message }); } catch { /* already closed */ }
+  }
 });
 
 // Confirm — client clicked "Yes, apply". Commits the draft to staging.

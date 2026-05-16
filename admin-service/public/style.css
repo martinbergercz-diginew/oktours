@@ -71,8 +71,23 @@ body {
 }
 .bubble { padding: 10px 14px; white-space: pre-wrap; word-wrap: break-word; }
 
-.thinking-hint { font-size: 11px; color: var(--ink-soft); margin-top: 6px; }
-.thinking-hint:empty { display: none; }
+/* Inline markdown inside assistant bubbles */
+.bubble code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.88em; background: rgba(0, 0, 0, 0.06);
+  padding: 1px 5px; border-radius: 4px;
+}
+.bubble strong { font-weight: 600; }
+
+/* Streaming progress steps */
+.thinking-steps { margin-top: 6px; }
+.thinking-steps:empty { display: none; }
+.thinking-step {
+  font-size: 12px; color: var(--ink); margin-top: 3px; text-align: left;
+}
+.thinking-step::before { content: "▸ "; color: var(--brand); }
+.thinking-step.done { color: var(--ink-soft); }
+.thinking-step.done::before { content: "✓ "; color: var(--brand); }
 
 .btn-row { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
 .btn {
@@ -179,6 +194,35 @@ body {
 .login-error {
   color: var(--warn); font-size: 13px; margin: 12px 0 0; min-height: 1em; text-align: center;
 }
+
+/* Publish-mode toggle */
+.pub-toggle {
+  font: inherit; font-size: 12px; cursor: pointer;
+  padding: 5px 12px; border-radius: 999px;
+  border: 1px solid var(--brand); background: var(--brand-soft); color: var(--brand);
+  white-space: nowrap; transition: background .15s, border-color .15s, color .15s;
+}
+.pub-toggle::before { content: "👁 "; }
+.pub-toggle:hover { background: #d6e8e0; }
+.pub-toggle.direct {
+  border-color: var(--warn); background: var(--warn-soft); color: var(--warn);
+}
+.pub-toggle.direct::before { content: "⚡ "; }
+
+/* Modal confirm dialog */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 50;
+  background: rgba(28, 28, 28, 0.45);
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.modal-card {
+  background: var(--panel); border-radius: var(--radius);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  padding: 22px 24px; width: 100%; max-width: 380px;
+}
+.modal-title { margin: 0 0 8px; font-size: 16px; font-weight: 600; }
+.modal-body { margin: 0 0 18px; font-size: 14px; color: var(--ink-soft); line-height: 1.5; }
+.modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
 
 /* Mobile */
 @media (max-width: 800px) {
