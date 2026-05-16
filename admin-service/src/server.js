@@ -14,7 +14,6 @@ const execFileP = promisify(execFile);
 import { runTurn } from "./agent.js";
 import { GitOps } from "./ops/git-ops.js";
 import { smokeCheck } from "./ops/smoke.js";
-import { notifyPublish } from "./ops/mailer.js";
 import { handleUpload } from "./ops/upload.js";
 import { loadDraft, saveDraft, clearDraft, emptyDraft, isDraftEmpty } from "./draft.js";
 import {
@@ -408,13 +407,9 @@ fastify.post("/admin/api/publish", async (req, reply) => {
       commit,
       liveUrl: LIVE_URL,
     });
-    await notifyPublish({
-      clientPrompt: session.uiLog.slice(-10).filter(e => e.kind === "user").pop()?.text || "(?)",
-      summary: session.uiLog.slice(-10).filter(e => e.kind === "staged").pop()?.summary || "(?)",
-      commitHash: commit,
-      commitLink: `https://github.com/martinbergercz-diginew/oktours/commit/${commit}`,
-      diff: "",   // TODO: include short diff
-    }).catch(err => fastify.log.warn({ err }, "Email notify failed (non-fatal)"));
+    // No email on routine publishes — Martin only wants to be emailed when
+    // the client explicitly asks to contact him (notify_developer tool).
+    // Every publish is still recorded in git history + the UI change log.
     return reply.send({ kind: "published", commit, liveUrl: LIVE_URL });
   } catch (err) {
     if (err.code === "SMOKE_FAILED") {
