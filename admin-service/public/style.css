@@ -202,12 +202,11 @@ body {
   border: 1px solid var(--brand); background: var(--brand-soft); color: var(--brand);
   white-space: nowrap; transition: background .15s, border-color .15s, color .15s;
 }
-.pub-toggle::before { content: "👁 "; }
 .pub-toggle:hover { background: #d6e8e0; }
-.pub-toggle.direct {
+.pub-toggle.warn {
   border-color: var(--warn); background: var(--warn-soft); color: var(--warn);
 }
-.pub-toggle.direct::before { content: "⚡ "; }
+.pub-toggle.warn:hover { background: #f6d9c9; }
 
 /* Modal confirm dialog */
 .modal-overlay {

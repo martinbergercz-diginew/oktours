@@ -11,12 +11,17 @@ const historyListEl = document.querySelector("#history-list");
 const historyEl = document.querySelector("#history");
 const historyToggleEl = document.querySelector("#history-toggle");
 const publishToggleEl = document.querySelector("#publish-toggle");
+const confirmToggleEl = document.querySelector("#confirm-toggle");
 
 let pendingSquashChoice = null;
 
 // Publish mode: "preview" (edit → náhled → publish) or "direct" (edit →
 // straight to live). Persisted so it survives reloads.
 let publishMode = localStorage.getItem("oktours_publish_mode") || "preview";
+
+// Confirm mode: "ask" (show the Ano/Ne prompt before applying) or "auto"
+// (apply proposed changes without asking). Destructive changes always ask.
+let confirmMode = localStorage.getItem("oktours_confirm_mode") || "ask";
 
 // ---- Markdown (tiny subset: the model uses **bold**, `code`, *italic*,
 // and "- " bullets — nothing else needs rendering) ----
@@ -269,16 +274,20 @@ function handleResponse(resp, lastUserText) {
 
     case "confirm_prompt": {
       const direct = publishMode === "direct";
+      // Auto-apply when confirmation is off — but a destructive change
+      // (removing visible content) always asks, whatever the toggle says.
+      const autoApply = confirmMode === "auto" && !resp.is_destructive;
       let yesLabel;
       if (direct) yesLabel = resp.is_destructive ? "Ano, odstranit a publikovat" : "Ano, publikovat na web";
       else yesLabel = resp.is_destructive ? "Ano, odstranit" : "Ano, použít";
       bubble("assistant", resp.text, {
         destructive: resp.is_destructive,
-        buttons: [
+        buttons: autoApply ? undefined : [
           { label: yesLabel, kind: resp.is_destructive ? "btn-warn" : "btn-primary", onClick: confirmDraft },
           { label: "Ne, zrušit", onClick: cancelDraft },
         ],
       });
+      if (autoApply) confirmDraft();
       break;
     }
 
@@ -478,11 +487,11 @@ async function refreshState() {
   }
 }
 
-// ---- Publish-mode toggle ----
+// ---- Header toggles ----
 function renderPublishToggle() {
   const direct = publishMode === "direct";
-  publishToggleEl.textContent = direct ? "Publikuji rovnou na web" : "Publikuji na náhled";
-  publishToggleEl.classList.toggle("direct", direct);
+  publishToggleEl.textContent = direct ? "⚡ Publikuji rovnou na web" : "👁 Publikuji na náhled";
+  publishToggleEl.classList.toggle("warn", direct);
   publishToggleEl.title = direct
     ? "Potvrzené změny se rovnou zveřejní na webu. Klikni pro režim s náhledem."
     : "Potvrzené změny se nejdřív ukážou na náhledu. Klikni pro publikování rovnou na web.";
@@ -494,6 +503,23 @@ if (publishToggleEl) {
     renderPublishToggle();
   };
   renderPublishToggle();
+}
+
+function renderConfirmToggle() {
+  const auto = confirmMode === "auto";
+  confirmToggleEl.textContent = auto ? "⏩ Měním bez potvrzení" : "✋ Ptám se před změnou";
+  confirmToggleEl.classList.toggle("warn", auto);
+  confirmToggleEl.title = auto
+    ? "Navržené změny se provedou rovnou, bez dotazu. Mazání obsahu se kvůli bezpečnosti potvrzuje vždy. Klikni pro režim s dotazem."
+    : "Před provedením každé změny se zeptám na potvrzení. Klikni pro provádění bez dotazu.";
+}
+if (confirmToggleEl) {
+  confirmToggleEl.onclick = () => {
+    confirmMode = confirmMode === "auto" ? "ask" : "auto";
+    localStorage.setItem("oktours_confirm_mode", confirmMode);
+    renderConfirmToggle();
+  };
+  renderConfirmToggle();
 }
 
 historyToggleEl.onclick = () => historyEl.classList.toggle("open");
