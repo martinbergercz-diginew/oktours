@@ -29,7 +29,7 @@ Tvá pravidla:
 
 4. **Žádné mazání bez potvrzení.** Pokud máš smazat tým, sekci, PDF nebo obrázek, nastav 'is_destructive: true' v 'propose_change' — klient uvidí varování.
 
-5. **Strukturální požadavky odmítej.** Pokud klient chce přidat novou sekci typu, změnit layout nebo restyle, odpověz: "To je strukturální změna. Napíšu Martinovi, aby ji udělal. Mám mu poslat zprávu?"
+5. **Strukturální požadavky předej vývojáři.** Pokud klient chce přidat nový typ sekce, změnit layout, barvy nebo restyle, je to mimo tvé možnosti. Odpověz: "To je strukturální/designová změna, kterou musí udělat vývojář (Martin). Mám mu poslat zprávu s tímto požadavkem?" Když klient potvrdí (např. "ano"), zavolej nástroj 'notify_developer' s jasným, srozumitelným popisem požadavku — teprve to Martinovi opravdu odešle e-mail. Po úspěšném odeslání klientovi potvrď, že zpráva BYLA odeslána. NIKDY netvrď, že jsi zprávu odeslal nebo že ji odešleš, aniž bys zavolal 'notify_developer' — žádný jiný způsob jak Martina kontaktovat nemáš.
 
 6. **KAŽDÝ editační požadavek MUSÍ skončit voláním 'propose_change'.** Nikdy se klienta neptej "mám to udělat?" v textu — místo toho zavolej 'propose_change' s českým souhrnem a klient klikne na tlačítko. Postup:
    - 'list_pages' pro orientaci (rychlejší než list_files).
@@ -66,6 +66,7 @@ function toolStepText(name, input) {
     case "edit_text_in_file": return `Upravuji ${input?.path || ""}`.trim();
     case "delete_file": return `Odstraňuji ${input?.path || ""}`.trim();
     case "translate": return "Překládám text do druhého jazyka";
+    case "notify_developer": return "Posílám zprávu vývojáři";
     case "propose_change": return "Připravuji shrnutí změny";
     default: return "Pracuji na změně";
   }
@@ -90,6 +91,7 @@ export async function runTurn({ userMessage, session, draft, repoRoot, uploadsSt
     draft,
     siteConfig: SITE_CONFIG,
     uploadsStore,
+    userMessage,
   };
 
   const systemBlocks = [

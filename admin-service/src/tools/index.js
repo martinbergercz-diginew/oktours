@@ -6,6 +6,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { resolveRepoPath, assertWritable, assertDeletable, PathError } from "../paths.js";
 import { translate } from "../ops/translate.js";
+import { notifyDeveloper } from "../ops/mailer.js";
 
 const MAX_READ_BYTES = 200 * 1024;
 
@@ -86,6 +87,20 @@ export const TOOL_DEFINITIONS = [
     input_schema: { type: "object", properties: {} },
   },
   {
+    name: "notify_developer",
+    description: "Send the developer (Martin) an email with a request the client cannot do via chat — structural or design changes: new section types, layout changes, colour/restyle, anything beyond editing text/images/PDFs in existing sections. Call this ONLY after the client has confirmed they want Martin notified. After it succeeds, tell the client the message really was sent. Never claim a message was sent without calling this tool.",
+    input_schema: {
+      type: "object",
+      properties: {
+        request: {
+          type: "string",
+          description: "Clear, self-contained Czech description of what the client wants. Include specifics — colours, sizes, which page/section — so Martin can act on it without further context.",
+        },
+      },
+      required: ["request"],
+    },
+  },
+  {
     name: "propose_change",
     description: "Surface the staged draft to the client in plain Czech and ask them to confirm. NO commit happens until the client clicks Yes. After calling this you should STOP the turn — wait for the next user message via the confirmation endpoint.",
     input_schema: {
@@ -143,6 +158,7 @@ async function dispatch(name, input, ctx) {
     case "list_pages": return toolListPages(ctx);
     case "translate":  return await toolTranslate(input, ctx);
     case "list_uploads": return await toolListUploads(ctx);
+    case "notify_developer": return await toolNotifyDeveloper(input, ctx);
     case "propose_change": return toolProposeChange(input, ctx);
     default: throw new Error(`Unknown tool: ${name}`);
   }
@@ -242,6 +258,17 @@ async function toolTranslate({ text, from, to }, _ctx) {
 
 async function toolListUploads({ uploadsStore }) {
   return await uploadsStore.list();
+}
+
+async function toolNotifyDeveloper({ request }, ctx) {
+  if (typeof request !== "string" || !request.trim()) {
+    throw new Error("notify_developer: request must be a non-empty string.");
+  }
+  const result = await notifyDeveloper({
+    request: request.trim(),
+    clientPrompt: ctx.userMessage || "",
+  });
+  return { sent: true, dryRun: !!result.dryRun };
 }
 
 function toolProposeChange(input, { draft }) {

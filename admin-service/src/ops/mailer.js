@@ -49,3 +49,36 @@ export async function notifyPublish({ clientPrompt, summary, commitHash, commitL
     text: body,
   });
 }
+
+// Email Martin a request the client can't do via chat — structural /
+// design changes. Sent when the agent calls the notify_developer tool.
+export async function notifyDeveloper({ request, clientPrompt }) {
+  const to = process.env.NOTIFY_EMAIL;
+  if (!to) throw new Error("Vývojářský e-mail není nakonfigurovaný (NOTIFY_EMAIL).");
+
+  const subject = `[OK TOURS] Požadavek na vývojáře: ${request.slice(0, 60)}`;
+  const body = [
+    "Klient OK TOURS poslal přes chat (oktours.cz/admin) požadavek, který",
+    "musí vyřešit vývojář — strukturální nebo designová změna mimo rozsah",
+    "samoobslužné správy obsahu.",
+    "",
+    "Požadavek:",
+    request,
+    ...(clientPrompt ? ["", "Klient původně napsal:", `> ${clientPrompt}`] : []),
+    "",
+    "— odesláno automaticky z oktours.cz/admin",
+  ].join("\n");
+
+  if (process.env.DRY_RUN === "true") {
+    console.log(`[DRY] Would send developer email to ${to}: ${subject}`);
+    return { sent: true, dryRun: true };
+  }
+
+  await getTransporter().sendMail({
+    from: `oktours-admin@${process.env.MAIL_DOMAIN || "oktours.cz"}`,
+    to,
+    subject,
+    text: body,
+  });
+  return { sent: true };
+}
