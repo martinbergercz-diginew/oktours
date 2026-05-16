@@ -17,7 +17,15 @@
           <button class="pub-toggle" id="publish-toggle" type="button">Publikuji na náhled</button>
           <div class="state-pill" id="state-pill">Načítám…</div>
           <button class="reset-link" id="reset-conversation" title="Vyresetovat konverzaci, pokud začne dělat chyby">↺</button>
-          <button class="reset-link" id="logout" title="Odhlásit se">Odhlásit</button>
+          <div class="account">
+            <button class="reset-link" id="account-btn" type="button">Účet ▾</button>
+            <div class="account-menu" id="account-menu" hidden>
+              <div class="account-email" id="account-email"></div>
+              <button type="button" id="menu-change-password">Změnit heslo</button>
+              <button type="button" id="menu-users" hidden>Správa uživatelů</button>
+              <button type="button" id="menu-logout">Odhlásit se</button>
+            </div>
+          </div>
         </div>
       </header>
 

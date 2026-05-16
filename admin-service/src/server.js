@@ -21,44 +21,44 @@ import {
 } from "./session.js";
 import { UploadsStore } from "./uploads-store.js";
 import {
-  isAuthConfigured, checkPassword, issueToken,
-  isRequestAuthed, sessionCookie, clearCookie,
+  COOKIE_NAME, issueToken, readToken, sessionCookie, clearCookie, parseCookies,
 } from "./auth.js";
+import {
+  seedFirstAdmin, listUsers, findById, findByEmail, createUser, setPassword,
+  setRole, deleteUser, verifyLogin, createResetToken, consumeResetToken, ROLES,
+} from "./users.js";
+import { verifyPassword } from "./auth.js";
+import { sendPasswordReset } from "./ops/mailer.js";
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 const PORT = parseInt(process.env.PORT || "3000", 10);
 const HOST = process.env.HOST || "127.0.0.1";
 const DRY_RUN = process.env.DRY_RUN === "true";
 
-// --- Auth gate --------------------------------------------------------
-// The admin UI sits on the public internet, so it must not be open to
-// everyone. We require a shared-password login (see src/auth.js).
-//
-// Production (DRY_RUN=false) MUST have ADMIN_PASSWORD set — refuse to
-// start a public, login-less admin service. In local dev, if no password
-// is configured the gate is bypassed so `npm run dev` just works; set
-// ADMIN_PASSWORD in .env to exercise the real login flow locally.
-if (!DRY_RUN && !isAuthConfigured()) {
-  console.error("[auth] FATAL: ADMIN_PASSWORD is not set. Refusing to start a public admin service without a login.");
-  process.exit(1);
-}
-const AUTH_ENABLED = isAuthConfigured();
+// --- Auth ------------------------------------------------------------
+// The admin UI is on the public internet — every /admin request needs a
+// valid session cookie tied to a user account (src/users.js, auth.js).
 const AUTH_SECURE = process.env.NODE_ENV === "production";
-if (!AUTH_ENABLED) {
-  console.warn("[auth] ADMIN_PASSWORD not set — login is BYPASSED (dev mode only).");
-}
+// Base URL of the admin UI, used to build password-reset links.
+const ADMIN_BASE_URL =
+  (process.env.LIVE_URL || `http://localhost:${PORT}/`).replace(/\/+$/, "") + "/admin";
 
-// Paths reachable without a session cookie: the login flow itself, the
-// health probe (called locally by the deploy runbook), and the
+// Paths reachable without a session cookie: the login + password-reset
+// flows, the health probe (called locally by the deploy runbook), and the
 // token-gated redeploy endpoint (it carries its own X-Admin-Token).
 const AUTH_EXEMPT = new Set([
   "/admin/login",
   "/admin/login.html",
   "/admin/login.js",
+  "/admin/reset",
+  "/admin/reset.html",
+  "/admin/reset.js",
   "/admin/style.css",
   "/admin/api/login",
   "/admin/api/logout",
   "/admin/api/health",
+  "/admin/api/request-reset",
+  "/admin/api/reset-password",
   "/admin/api/redeploy-main",
 ]);
 
@@ -66,6 +66,26 @@ const AUTH_EXEMPT = new Set([
 const dataDir = process.env.DATA_DIR || path.resolve(__dirname, "..", "data");
 process.env.DATA_DIR = dataDir;
 await fs.mkdir(dataDir, { recursive: true });
+
+// Seed the first admin account from env on a fresh install (no-op once
+// any user exists). The service refuses to start with zero users — nobody
+// could log in.
+{
+  const seed = await seedFirstAdmin({
+    email: process.env.ADMIN_EMAIL,
+    password: process.env.ADMIN_PASSWORD,
+  });
+  if (seed.seeded) console.log(`[auth] seeded first admin account: ${seed.email}`);
+  if ((await listUsers()).length === 0) {
+    if (DRY_RUN) {
+      await seedFirstAdmin({ email: "admin@oktours.local", password: "admin123" });
+      console.warn('[auth] DEV: seeded admin@oktours.local / "admin123" — set ADMIN_EMAIL + ADMIN_PASSWORD to override.');
+    } else {
+      console.error("[auth] FATAL: no users, and ADMIN_EMAIL / ADMIN_PASSWORD not set — nobody could log in.");
+      process.exit(1);
+    }
+  }
+}
 
 // Where the developer's main checkout lives — used in dry-run to attach a
 // dedicated worktree for admin ops so they don't trample the active dev tree.
@@ -162,38 +182,66 @@ if (DRY_RUN) {
   });
 }
 
+// Resolve the user behind a request's session cookie. Returns the user
+// record or null. The credential-version check means a password change
+// or reset instantly invalidates that user's older sessions.
+async function getRequestUser(req) {
+  const payload = readToken(parseCookies(req.headers.cookie)[COOKIE_NAME]);
+  if (!payload) return null;
+  const user = await findById(payload.uid);
+  if (!user || user.credentialVersion !== payload.cv) return null;
+  return user;
+}
+
 // Auth gate — runs before every route. Anything under /admin that isn't
-// in AUTH_EXEMPT needs a valid session cookie.
+// in AUTH_EXEMPT needs a valid session cookie; the user is attached as
+// req.user.
 fastify.addHook("onRequest", async (req, reply) => {
-  if (!AUTH_ENABLED) return;                       // dev bypass
   const pathOnly = req.url.split("?")[0];
   if (!pathOnly.startsWith("/admin")) return;       // "/" redirect etc.
   if (AUTH_EXEMPT.has(pathOnly)) return;
-  if (isRequestAuthed(req)) return;
-  if (pathOnly.startsWith("/admin/api/")) {
-    return reply.code(401).send({ error: "Nepřihlášeno.", login: true });
+  const user = await getRequestUser(req);
+  if (!user) {
+    if (pathOnly.startsWith("/admin/api/")) {
+      return reply.code(401).send({ error: "Nepřihlášeno.", login: true });
+    }
+    return reply.redirect("/admin/login");
   }
-  // A UI request from a browser without a session → show the login page.
-  return reply.redirect("/admin/login");
+  req.user = user;
 });
 
-// Login page.
+// Reject non-admins on user-management endpoints.
+function requireAdmin(req, reply) {
+  if (req.user?.role !== "admin") {
+    reply.code(403).send({ error: "Tato akce je jen pro administrátora." });
+    return false;
+  }
+  return true;
+}
+
+// Login + password-reset pages.
 fastify.get("/admin/login", async (req, reply) => {
-  if (AUTH_ENABLED && isRequestAuthed(req)) return reply.redirect("/admin/");
+  if (await getRequestUser(req)) return reply.redirect("/admin/");
   return reply.sendFile("login.html");
 });
+fastify.get("/admin/reset", async (_req, reply) => reply.sendFile("reset.html"));
 
-// Login — exchange the shared password for a session cookie.
+// Login — exchange email + password for a session cookie.
 fastify.post("/admin/api/login", async (req, reply) => {
-  if (!isAuthConfigured()) {
-    return reply.code(503).send({ error: "Přihlášení není nakonfigurováno (chybí ADMIN_PASSWORD)." });
+  const { email, password } = req.body ?? {};
+  if (typeof email !== "string" || typeof password !== "string") {
+    return reply.code(400).send({ error: "Zadej e-mail a heslo." });
   }
-  const { password } = req.body ?? {};
-  if (!checkPassword(password)) {
-    await new Promise(r => setTimeout(r, 600));    // slow down brute force
-    return reply.code(401).send({ error: "Nesprávné heslo." });
+  const result = await verifyLogin(email, password);
+  if (!result.ok) {
+    if (result.lockedMs) {
+      const min = Math.ceil(result.lockedMs / 60000);
+      return reply.code(429).send({ error: `Příliš mnoho pokusů o přihlášení. Zkus to znovu za ${min} min.` });
+    }
+    await new Promise(r => setTimeout(r, 500));
+    return reply.code(401).send({ error: "Nesprávný e-mail nebo heslo." });
   }
-  reply.header("set-cookie", sessionCookie(issueToken(), { secure: AUTH_SECURE }));
+  reply.header("set-cookie", sessionCookie(issueToken(result.user), { secure: AUTH_SECURE }));
   return { ok: true };
 });
 
@@ -205,12 +253,127 @@ fastify.post("/admin/api/logout", async (_req, reply) => {
 
 // Health.
 fastify.get("/admin/api/health", async () => ({
-  ok: true, dryRun: DRY_RUN, repo: REPO_PATH, version: "0.1.0", authEnabled: AUTH_ENABLED,
+  ok: true, dryRun: DRY_RUN, repo: REPO_PATH, version: "0.1.0",
 }));
 
+// Current user.
+fastify.get("/admin/api/me", async (req) => ({
+  email: req.user.email, role: req.user.role,
+}));
+
+// Change own password. Bumps the credential version, so we re-issue the
+// cookie or the client would be logged straight out.
+fastify.post("/admin/api/change-password", async (req, reply) => {
+  const { currentPassword, newPassword } = req.body ?? {};
+  if (typeof currentPassword !== "string" || typeof newPassword !== "string") {
+    return reply.code(400).send({ error: "Vyplň stávající i nové heslo." });
+  }
+  if (!verifyPassword(currentPassword, req.user.passwordHash)) {
+    await new Promise(r => setTimeout(r, 500));
+    return reply.code(401).send({ error: "Stávající heslo není správné." });
+  }
+  try {
+    await setPassword(req.user.id, newPassword);
+  } catch (err) {
+    return reply.code(400).send({ error: err.message });
+  }
+  const fresh = await findById(req.user.id);
+  reply.header("set-cookie", sessionCookie(issueToken(fresh), { secure: AUTH_SECURE }));
+  return { ok: true };
+});
+
+// Forgot password — email a one-time reset link. Always returns ok so the
+// response can't be used to probe which emails have accounts.
+fastify.post("/admin/api/request-reset", async (req, reply) => {
+  const { email } = req.body ?? {};
+  if (typeof email === "string" && email.trim()) {
+    const user = await findByEmail(email);
+    if (user) {
+      try {
+        const token = await createResetToken(user.id);
+        await sendPasswordReset({
+          to: user.email,
+          link: `${ADMIN_BASE_URL}/reset?token=${token}`,
+        });
+      } catch (err) {
+        fastify.log.error({ err }, "Password reset email failed");
+      }
+    }
+  }
+  return { ok: true };
+});
+
+// Reset password via a one-time token from the email link.
+fastify.post("/admin/api/reset-password", async (req, reply) => {
+  const { token, newPassword } = req.body ?? {};
+  if (typeof token !== "string" || typeof newPassword !== "string") {
+    return reply.code(400).send({ error: "Chybí token nebo nové heslo." });
+  }
+  const userId = await consumeResetToken(token);
+  if (!userId) {
+    return reply.code(400).send({ error: "Odkaz je neplatný nebo vypršel. Vyžádej si nový." });
+  }
+  try {
+    await setPassword(userId, newPassword);
+  } catch (err) {
+    return reply.code(400).send({ error: err.message });
+  }
+  return { ok: true };
+});
+
+// --- User management (admin only) ------------------------------------
+fastify.get("/admin/api/users", async (req, reply) => {
+  if (!requireAdmin(req, reply)) return;
+  return { users: await listUsers(), me: req.user.id };
+});
+
+fastify.post("/admin/api/users", async (req, reply) => {
+  if (!requireAdmin(req, reply)) return;
+  const { email, role, password } = req.body ?? {};
+  try {
+    return { user: await createUser({ email, role, password }) };
+  } catch (err) {
+    return reply.code(400).send({ error: err.message });
+  }
+});
+
+fastify.post("/admin/api/users/:id/password", async (req, reply) => {
+  if (!requireAdmin(req, reply)) return;
+  const { newPassword } = req.body ?? {};
+  try {
+    await setPassword(req.params.id, newPassword);
+    return { ok: true };
+  } catch (err) {
+    return reply.code(400).send({ error: err.message });
+  }
+});
+
+fastify.post("/admin/api/users/:id/role", async (req, reply) => {
+  if (!requireAdmin(req, reply)) return;
+  const { role } = req.body ?? {};
+  if (!ROLES.includes(role)) return reply.code(400).send({ error: "Neplatná role." });
+  try {
+    return { user: await setRole(req.params.id, role) };
+  } catch (err) {
+    return reply.code(400).send({ error: err.message });
+  }
+});
+
+fastify.delete("/admin/api/users/:id", async (req, reply) => {
+  if (!requireAdmin(req, reply)) return;
+  if (req.params.id === req.user.id) {
+    return reply.code(400).send({ error: "Nemůžeš smazat vlastní účet." });
+  }
+  try {
+    return await deleteUser(req.params.id);
+  } catch (err) {
+    return reply.code(400).send({ error: err.message });
+  }
+});
+
 // Session bootstrap — returns chat history + pending state for resume.
-fastify.get("/admin/api/session", async () => {
-  const session = await getSession();
+fastify.get("/admin/api/session", async (req) => {
+  const session = await getSession(req.user.id);
   const draft = await loadDraft(session.sessionId);
   let staging = null;
   try {
@@ -263,7 +426,7 @@ fastify.post("/admin/api/chat", async (req, reply) => {
   const finish = (payload) => { send({ type: "done", payload }); reply.raw.end(); };
 
   try {
-    const session = await getSession();
+    const session = await getSession(req.user.id);
     const draft = await loadDraft(session.sessionId);
     const systemAdditions = [];
 
@@ -344,7 +507,7 @@ fastify.post("/admin/api/chat", async (req, reply) => {
 
 // Confirm — client clicked "Yes, apply". Commits the draft to staging.
 fastify.post("/admin/api/confirm", async (req, reply) => {
-  const session = await getSession();
+  const session = await getSession(req.user.id);
   const draft = await loadDraft(session.sessionId);
   if (!draft.awaiting_confirmation) {
     return reply.code(400).send({ error: "No draft awaiting confirmation." });
@@ -378,8 +541,8 @@ fastify.post("/admin/api/confirm", async (req, reply) => {
 
 // Reset conversation — clears messages history (UI log + draft preserved unless
 // the client also undoes staging). Used to recover from a corrupted state.
-fastify.post("/admin/api/reset-conversation", async () => {
-  const session = await getSession();
+fastify.post("/admin/api/reset-conversation", async (req) => {
+  const session = await getSession(req.user.id);
   await resetMessages(session.sessionId);
   await clearDraft(session.sessionId);
   return { ok: true };
@@ -387,7 +550,7 @@ fastify.post("/admin/api/reset-conversation", async () => {
 
 // Cancel — client clicked "No, cancel". Discards the draft.
 fastify.post("/admin/api/cancel", async (req, reply) => {
-  const session = await getSession();
+  const session = await getSession(req.user.id);
   await clearDraft(session.sessionId);
   await appendUiEntry(session.sessionId, { kind: "cancelled" });
   return reply.send({ ok: true });
@@ -395,7 +558,7 @@ fastify.post("/admin/api/cancel", async (req, reply) => {
 
 // Publish — shadow-deploy + smoke + atomic swap.
 fastify.post("/admin/api/publish", async (req, reply) => {
-  const session = await getSession();
+  const session = await getSession(req.user.id);
   if (!(await checkRateLimit(session.sessionId, "publishes_today", 10))) {
     return reply.code(429).send({ error: "Denní limit publikací vyčerpán (10/den)." });
   }
@@ -422,8 +585,8 @@ fastify.post("/admin/api/publish", async (req, reply) => {
 });
 
 // Undo — discard the unpublished staging commit.
-fastify.post("/admin/api/undo", async () => {
-  const session = await getSession();
+fastify.post("/admin/api/undo", async (req) => {
+  const session = await getSession(req.user.id);
   await gitOps.undoStaging();
   await clearDraft(session.sessionId);
   await appendUiEntry(session.sessionId, { kind: "undone" });

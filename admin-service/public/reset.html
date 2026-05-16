@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>OK TOURS — nové heslo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="login-screen">
+    <div class="login-card">
+      <h1>OK TOURS</h1>
+      <p class="login-sub">Nastavení nového hesla</p>
+
+      <form id="reset-form">
+        <label for="pw1">Nové heslo</label>
+        <input type="password" id="pw1" autocomplete="new-password" required minlength="8">
+        <label for="pw2">Nové heslo znovu</label>
+        <input type="password" id="pw2" autocomplete="new-password" required minlength="8">
+        <button type="submit">Nastavit heslo</button>
+        <p class="login-error" id="reset-msg" role="alert"></p>
+      </form>
+    </div>
+  </div>
+  <script src="reset.js"></script>
+</body>
+</html>

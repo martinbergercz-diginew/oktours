@@ -546,13 +546,212 @@ if (resetBtn) {
   };
 }
 
-const logoutBtn = document.getElementById("logout");
-if (logoutBtn) {
-  logoutBtn.onclick = async () => {
-    try { await api("/admin/api/logout", { method: "POST", body: {} }); }
-    catch { /* logout is best-effort */ }
-    location.href = "/admin/login";
+// ---- Account menu + user management ----
+let currentUser = null;
+
+async function loadMe() {
+  try {
+    currentUser = await api("/admin/api/me");
+    document.getElementById("account-email").textContent = currentUser.email;
+    if (currentUser.role === "admin") {
+      document.getElementById("menu-users").hidden = false;
+    }
+  } catch { /* the auth gate redirects if truly unauthenticated */ }
+}
+
+const accountBtn = document.getElementById("account-btn");
+const accountMenu = document.getElementById("account-menu");
+accountBtn.onclick = (e) => { e.stopPropagation(); accountMenu.hidden = !accountMenu.hidden; };
+document.addEventListener("click", (e) => {
+  if (!accountMenu.hidden && !accountMenu.contains(e.target) && e.target !== accountBtn) {
+    accountMenu.hidden = true;
+  }
+});
+document.getElementById("menu-change-password").onclick = () => { accountMenu.hidden = true; changePasswordModal(); };
+document.getElementById("menu-users").onclick = () => { accountMenu.hidden = true; usersModal(); };
+document.getElementById("menu-logout").onclick = async () => {
+  try { await api("/admin/api/logout", { method: "POST", body: {} }); }
+  catch { /* best-effort */ }
+  location.href = "/admin/login";
+};
+
+// Generic modal shell — returns { body, close }.
+function openModal({ title, wide = false }) {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  const card = document.createElement("div");
+  card.className = "modal-card" + (wide ? " modal-wide" : "");
+  const h = document.createElement("h3");
+  h.className = "modal-title";
+  h.textContent = title;
+  const body = document.createElement("div");
+  card.append(h, body);
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+  const onKey = (e) => { if (e.key === "Escape") close(); };
+  function close() { overlay.remove(); document.removeEventListener("keydown", onKey); }
+  overlay.onclick = (e) => { if (e.target === overlay) close(); };
+  document.addEventListener("keydown", onKey);
+  return { body, close };
+}
+
+function changePasswordModal() {
+  const { body, close } = openModal({ title: "Změnit heslo" });
+  body.innerHTML = `
+    <form class="modal-form" id="cp-form">
+      <label>Stávající heslo<input type="password" id="cp-cur" autocomplete="current-password" required></label>
+      <label>Nové heslo (alespoň 8 znaků)<input type="password" id="cp-new" autocomplete="new-password" required minlength="8"></label>
+      <label>Nové heslo znovu<input type="password" id="cp-new2" autocomplete="new-password" required minlength="8"></label>
+      <p class="modal-msg" id="cp-msg"></p>
+      <div class="modal-btns">
+        <button type="button" class="btn" id="cp-cancel">Zrušit</button>
+        <button type="submit" class="btn btn-primary">Uložit heslo</button>
+      </div>
+    </form>`;
+  const msg = body.querySelector("#cp-msg");
+  body.querySelector("#cp-cancel").onclick = close;
+  body.querySelector("#cp-form").onsubmit = async (ev) => {
+    ev.preventDefault();
+    msg.textContent = "";
+    const n1 = body.querySelector("#cp-new").value;
+    if (n1 !== body.querySelector("#cp-new2").value) { msg.textContent = "Nová hesla se neshodují."; return; }
+    try {
+      await api("/admin/api/change-password", {
+        method: "POST",
+        body: { currentPassword: body.querySelector("#cp-cur").value, newPassword: n1 },
+      });
+      close();
+      bubble("system", "Heslo bylo změněno.");
+    } catch (err) { msg.textContent = err.message; }
   };
+}
+
+function setUserPasswordModal(user) {
+  const { body, close } = openModal({ title: `Nové heslo — ${user.email}` });
+  body.innerHTML = `
+    <form class="modal-form" id="sp-form">
+      <label>Nové heslo (alespoň 8 znaků)<input type="password" id="sp-pw" autocomplete="new-password" required minlength="8"></label>
+      <p class="modal-msg" id="sp-msg"></p>
+      <div class="modal-btns">
+        <button type="button" class="btn" id="sp-cancel">Zrušit</button>
+        <button type="submit" class="btn btn-primary">Nastavit heslo</button>
+      </div>
+    </form>`;
+  body.querySelector("#sp-cancel").onclick = close;
+  const msg = body.querySelector("#sp-msg");
+  body.querySelector("#sp-form").onsubmit = async (ev) => {
+    ev.preventDefault();
+    msg.textContent = "";
+    try {
+      await api(`/admin/api/users/${user.id}/password`, {
+        method: "POST",
+        body: { newPassword: body.querySelector("#sp-pw").value },
+      });
+      close();
+      bubble("system", `Heslo uživatele ${user.email} bylo nastaveno.`);
+    } catch (err) { msg.textContent = err.message; }
+  };
+}
+
+function usersModal() {
+  const { body, close } = openModal({ title: "Správa uživatelů", wide: true });
+  body.innerHTML = `
+    <div id="users-list" class="users-list">Načítám…</div>
+    <form class="modal-form" id="add-user-form">
+      <h4>Přidat uživatele</h4>
+      <label>E-mail<input type="email" id="nu-email" required></label>
+      <label>Role
+        <select id="nu-role">
+          <option value="editor">Editor — může upravovat web</option>
+          <option value="admin">Administrátor — navíc spravuje uživatele</option>
+        </select>
+      </label>
+      <label>Heslo (alespoň 8 znaků)<input type="password" id="nu-pw" required minlength="8"></label>
+      <p class="modal-msg" id="nu-msg"></p>
+      <div class="modal-btns">
+        <button type="button" class="btn" id="users-close">Zavřít</button>
+        <button type="submit" class="btn btn-primary">Přidat uživatele</button>
+      </div>
+    </form>`;
+  body.querySelector("#users-close").onclick = close;
+  const listEl = body.querySelector("#users-list");
+  const nuMsg = body.querySelector("#nu-msg");
+
+  async function render() {
+    try {
+      const data = await api("/admin/api/users");
+      listEl.innerHTML = "";
+      for (const u of data.users) {
+        const isMe = u.id === data.me;
+        const row = document.createElement("div");
+        row.className = "user-row";
+        const info = document.createElement("div");
+        info.className = "user-info";
+        info.innerHTML = `<span class="user-email">${escapeHtml(u.email)}${isMe ? " · vy" : ""}</span>` +
+          `<span class="user-role role-${u.role}">${u.role === "admin" ? "Administrátor" : "Editor"}</span>`;
+        const actions = document.createElement("div");
+        actions.className = "user-actions";
+
+        const roleBtn = document.createElement("button");
+        roleBtn.className = "btn btn-small";
+        roleBtn.textContent = u.role === "admin" ? "Změnit na editora" : "Povýšit na admina";
+        roleBtn.onclick = async () => {
+          try {
+            await api(`/admin/api/users/${u.id}/role`, { method: "POST", body: { role: u.role === "admin" ? "editor" : "admin" } });
+            render();
+          } catch (err) { showError(err.message); }
+        };
+
+        const pwBtn = document.createElement("button");
+        pwBtn.className = "btn btn-small";
+        pwBtn.textContent = "Nastavit heslo";
+        pwBtn.onclick = () => setUserPasswordModal(u);
+
+        const delBtn = document.createElement("button");
+        delBtn.className = "btn btn-small btn-warn";
+        delBtn.textContent = "Smazat";
+        delBtn.disabled = isMe;
+        delBtn.onclick = async () => {
+          const ok = await confirmDialog({
+            title: "Smazat uživatele?",
+            body: `Účet ${u.email} bude odstraněn a tato osoba se už nepřihlásí.`,
+            confirmLabel: "Smazat účet", cancelLabel: "Ponechat", danger: true,
+          });
+          if (!ok) return;
+          try { await api(`/admin/api/users/${u.id}`, { method: "DELETE" }); render(); }
+          catch (err) { showError(err.message); }
+        };
+
+        actions.append(roleBtn, pwBtn, delBtn);
+        row.append(info, actions);
+        listEl.appendChild(row);
+      }
+    } catch (err) {
+      listEl.textContent = "Nelze načíst uživatele: " + err.message;
+    }
+  }
+
+  body.querySelector("#add-user-form").onsubmit = async (ev) => {
+    ev.preventDefault();
+    nuMsg.textContent = ""; nuMsg.className = "modal-msg";
+    try {
+      await api("/admin/api/users", {
+        method: "POST",
+        body: {
+          email: body.querySelector("#nu-email").value.trim(),
+          role: body.querySelector("#nu-role").value,
+          password: body.querySelector("#nu-pw").value,
+        },
+      });
+      body.querySelector("#nu-email").value = "";
+      body.querySelector("#nu-pw").value = "";
+      nuMsg.className = "modal-ok";
+      nuMsg.textContent = "Uživatel přidán.";
+      render();
+    } catch (err) { nuMsg.textContent = err.message; }
+  };
+
+  render();
 }
 
 inputEl.addEventListener("keydown", (ev) => {
@@ -562,5 +761,6 @@ inputEl.addEventListener("keydown", (ev) => {
   }
 });
 
+loadMe();
 refreshState();
 refreshHistory();

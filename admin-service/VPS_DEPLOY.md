@@ -163,7 +163,8 @@ All four dirs should be owned by `oktours-admin:caddy`.
 ## Step 7 — Choose the two secrets
 
 **Why:**
-- **`ADMIN_PASSWORD`** — the shared password the client types at `/admin/login`.
+- **`ADMIN_EMAIL` + `ADMIN_PASSWORD`** — seed the first admin account
+  (login is by email + password; further accounts are managed in the UI).
   The login itself is handled by the admin-service (`src/auth.js`), not Caddy.
 - **`STAGING_PASSWORD` hash** — the staging preview is a plain file_server with
   no app of its own, so Caddy basic-auth still gates it. Generate a bcrypt hash:
@@ -224,7 +225,9 @@ SMTP_HOST=localhost
 SMTP_PORT=25
 MAIL_DOMAIN=oktours.cz
 
-# Admin login.
+# Admin login. ADMIN_EMAIL + ADMIN_PASSWORD seed the first admin account
+# on first boot; afterwards accounts are managed in the UI.
+ADMIN_EMAIL=martinbergercz@gmail.com
 ADMIN_PASSWORD=REPLACE_ME
 SESSION_SECRET=REPLACE_ME_FROM_STEP_8
 
@@ -361,7 +364,7 @@ REMOTE
 
 Open `https://oktours.diginew.cz/admin/` in your browser.
 
-1. You land on the login page → enter `ADMIN_PASSWORD` (from step 7).
+1. You land on the login page → log in with `ADMIN_EMAIL` + `ADMIN_PASSWORD` (from step 7).
 2. You're now in the chat UI. Send something trivial, e.g.
    *"Změň text v patičce na 'Cestovní agentura OK TOURS Praha'"*.
 3. Wait for Claude's confirmation prompt.

@@ -3,50 +3,56 @@ import assert from "node:assert/strict";
 import crypto from "node:crypto";
 
 process.env.SESSION_SECRET = "test-secret-test-secret-0123456789";
-process.env.ADMIN_PASSWORD = "hunter2-correct-horse";
 
 const {
-  checkPassword, isAuthConfigured, issueToken, verifyToken,
+  hashPassword, verifyPassword, issueToken, readToken,
   parseCookies, sessionCookie, clearCookie, COOKIE_NAME,
 } = await import("../src/auth.js");
 
-test("isAuthConfigured reflects ADMIN_PASSWORD", () => {
-  assert.equal(isAuthConfigured(), true);
+test("hashPassword / verifyPassword round-trips", () => {
+  const hash = hashPassword("correct horse battery staple");
+  assert.match(hash, /^scrypt\$[0-9a-f]+\$[0-9a-f]+$/);
+  assert.equal(verifyPassword("correct horse battery staple", hash), true);
+  assert.equal(verifyPassword("wrong", hash), false);
+  assert.equal(verifyPassword("", hash), false);
 });
 
-test("checkPassword accepts the right password, rejects others", () => {
-  assert.equal(checkPassword("hunter2-correct-horse"), true);
-  assert.equal(checkPassword("wrong"), false);
-  assert.equal(checkPassword(""), false);
-  assert.equal(checkPassword(undefined), false);
-  assert.equal(checkPassword("hunter2-correct-horse "), false); // length mismatch
+test("two hashes of the same password differ (random salt)", () => {
+  assert.notEqual(hashPassword("same"), hashPassword("same"));
 });
 
-test("issued token verifies", () => {
-  const token = issueToken();
-  assert.equal(verifyToken(token), true);
+test("verifyPassword rejects malformed stored hashes", () => {
+  assert.equal(verifyPassword("x", "not-a-hash"), false);
+  assert.equal(verifyPassword("x", ""), false);
+  assert.equal(verifyPassword("x", undefined), false);
 });
 
-test("verifyToken rejects tampered / malformed tokens", () => {
-  const token = issueToken();
-  assert.equal(verifyToken(token + "x"), false);          // bad signature
-  assert.equal(verifyToken(token.replace(/^./, "A")), false); // bad payload
-  assert.equal(verifyToken("garbage"), false);
-  assert.equal(verifyToken(""), false);
-  assert.equal(verifyToken(undefined), false);
+const fakeUser = { id: "u_123", credentialVersion: 4 };
+
+test("issued token carries the user id + credential version", () => {
+  const payload = readToken(issueToken(fakeUser));
+  assert.equal(payload.uid, "u_123");
+  assert.equal(payload.cv, 4);
 });
 
-test("verifyToken rejects an expired token", () => {
-  // Hand-build a token with a past expiry, signed with the real secret.
-  const body = Buffer.from(JSON.stringify({ iat: 0, exp: 1 })).toString("base64url");
+test("readToken rejects tampered / malformed tokens", () => {
+  const token = issueToken(fakeUser);
+  assert.equal(readToken(token + "x"), null);
+  assert.equal(readToken(token.replace(/^./, "A")), null);
+  assert.equal(readToken("garbage"), null);
+  assert.equal(readToken(""), null);
+  assert.equal(readToken(undefined), null);
+});
+
+test("readToken rejects an expired token", () => {
+  const body = Buffer.from(JSON.stringify({ uid: "u_1", cv: 1, iat: 0, exp: 1 })).toString("base64url");
   const sig = crypto.createHmac("sha256", process.env.SESSION_SECRET).update(body).digest("base64url");
-  assert.equal(verifyToken(`${body}.${sig}`), false);
+  assert.equal(readToken(`${body}.${sig}`), null);
 });
 
 test("parseCookies handles the session cookie", () => {
-  const token = issueToken();
-  const header = `foo=bar; ${COOKIE_NAME}=${token}; baz=qux`;
-  const parsed = parseCookies(header);
+  const token = issueToken(fakeUser);
+  const parsed = parseCookies(`foo=bar; ${COOKIE_NAME}=${token}; baz=qux`);
   assert.equal(parsed[COOKIE_NAME], token);
   assert.equal(parsed.foo, "bar");
   assert.deepEqual(parseCookies(undefined), {});
@@ -58,11 +64,6 @@ test("sessionCookie / clearCookie produce expected attributes", () => {
   assert.match(c, /HttpOnly/);
   assert.match(c, /SameSite=Lax/);
   assert.match(c, /Secure/);
-  assert.match(c, /Path=\/admin/);
-
-  const insecure = sessionCookie("tok", { secure: false });
-  assert.doesNotMatch(insecure, /Secure/);
-
-  const cleared = clearCookie({ secure: false });
-  assert.match(cleared, /Max-Age=0/);
+  assert.doesNotMatch(sessionCookie("tok", { secure: false }), /Secure/);
+  assert.match(clearCookie({ secure: false }), /Max-Age=0/);
 });

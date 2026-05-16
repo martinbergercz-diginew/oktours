@@ -126,12 +126,17 @@ systemctl restart oktours-admin
 
 | Method | Path | Purpose |
 |---|---|---|
-| GET  | `/admin/login` | Login page (shown to unauthenticated browsers) |
-| POST | `/admin/api/login` | Exchange the shared password for a session cookie (`{ password }`) |
+| GET  | `/admin/login`, `/admin/reset` | Login + password-reset pages |
+| POST | `/admin/api/login` | Email + password → session cookie (`{ email, password }`) |
 | POST | `/admin/api/logout` | Clear the session cookie |
-| GET  | `/admin/api/health` | Health probe (also prints repo path + dryRun flag) |
+| GET  | `/admin/api/me` | Current user (`{ email, role }`) |
+| POST | `/admin/api/change-password` | Change own password (`{ currentPassword, newPassword }`) |
+| POST | `/admin/api/request-reset` | Email a reset link (`{ email }`) — always 200 |
+| POST | `/admin/api/reset-password` | Set new password via token (`{ token, newPassword }`) |
+| GET/POST/DELETE | `/admin/api/users…` | User management — **admin role only** |
+| GET  | `/admin/api/health` | Health probe (repo path + dryRun flag) |
 | GET  | `/admin/api/session` | Load chat history + state for resume |
-| POST | `/admin/api/chat` | Run one Claude turn (`{ text, squashChoice? }`) |
+| POST | `/admin/api/chat` | Run one Claude turn — SSE stream (`{ text, squashChoice? }`) |
 | POST | `/admin/api/confirm` | Client clicked "Yes, apply" → commit draft to staging |
 | POST | `/admin/api/cancel` | Client clicked "No, cancel" → discard draft |
 | POST | `/admin/api/publish` | Shadow-deploy + smoke + atomic swap |
@@ -144,10 +149,12 @@ systemctl restart oktours-admin
 
 ## Safety mechanisms (see spec §6 for details)
 
-- **Shared-password login** (`src/auth.js`) — every `/admin` request needs a
-  signed, HttpOnly session cookie. Production refuses to start without
-  `ADMIN_PASSWORD`. The `/admin/api/redeploy-main` endpoint is exempt (it has
-  its own `X-Admin-Token` gate).
+- **User accounts + roles** (`src/auth.js`, `src/users.js`) — login by email +
+  scrypt-hashed password; every `/admin` request needs a signed, HttpOnly
+  session cookie carrying the user id + credential version (a password change
+  instantly kills old sessions). Two roles: `admin` (also manages users) and
+  `editor`. Failed logins are throttled. The `/admin/api/redeploy-main`
+  endpoint is exempt (it has its own `X-Admin-Token` gate).
 - **Typed tools only**, no bash. See `src/tools/index.js`.
 - **Path allowlist** (`src/paths.js`) blocks `.git`, `.env`, `.php`, `.sh`, `admin-service/`, path traversal, symlink escapes.
 - **PROTECTED_FILES** list — 3 pages, send-mail.php, 5 legal PDFs, robots/sitemap, CLAUDE.md — undeletable.

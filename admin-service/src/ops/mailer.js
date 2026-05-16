@@ -82,3 +82,31 @@ export async function notifyDeveloper({ request, clientPrompt }) {
   });
   return { sent: true };
 }
+
+// Email a password-reset link to a user who used "forgot password".
+export async function sendPasswordReset({ to, link }) {
+  const subject = "[OK TOURS] Obnovení hesla do správy webu";
+  const body = [
+    "Někdo (snad vy) požádal o obnovení hesla do správy webu OK TOURS.",
+    "",
+    "Nové heslo si nastavíte na tomto odkazu (platí 1 hodinu):",
+    link,
+    "",
+    "Pokud jste o obnovení nežádali, tento e-mail ignorujte — heslo zůstává beze změny.",
+    "",
+    "— oktours.cz/admin",
+  ].join("\n");
+
+  if (process.env.DRY_RUN === "true") {
+    console.log(`[DRY] Would send password-reset email to ${to}: ${link}`);
+    return { sent: true, dryRun: true };
+  }
+
+  await getTransporter().sendMail({
+    from: `oktours-admin@${process.env.MAIL_DOMAIN || "oktours.cz"}`,
+    to,
+    subject,
+    text: body,
+  });
+  return { sent: true };
+}
