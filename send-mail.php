@@ -26,12 +26,14 @@ if ($company) $body .= "Společnost: $company\n";
 if ($topic)   $body .= "Oblast zájmu: $topic\n";
 $body .= "\nZpráva:\n$message\n";
 
-$headers  = "From: web@oktours.cz\r\n";
+$headers  = "From: OK TOURS web <no-reply@oktours.cz>\r\n";
 $headers .= "Reply-To: $email\r\n";
 $headers .= "Bcc: $bcc\r\n";
 $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
 
-$sent = mail($to, $subject, $body, $headers);
+// -f sets the envelope sender (MAIL FROM) to no-reply@oktours.cz so it
+// matches the From header and the client's M365 SMTP relay.
+$sent = mail($to, $subject, $body, $headers, '-f no-reply@oktours.cz');
 
 header('Content-Type: application/json');
 echo json_encode(['success' => $sent]);
