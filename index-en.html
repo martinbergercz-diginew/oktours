@@ -441,7 +441,7 @@
     .team-info .motto { font-size: .8rem; color: var(--muted); font-style: italic; line-height: 1.55; }
 
     /* ── Portfolio ────────────────────────────────────────── */
-    .portfolio-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 48px; }
+    .portfolio-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; margin-top: 48px; }
     .portfolio-card {
       border-radius: var(--radius); overflow: hidden;
       box-shadow: var(--shadow); position: relative;
@@ -453,6 +453,7 @@
     }
     .portfolio-img.hotels { background: linear-gradient(135deg, #1a3a7a 0%, #0a1f44 100%); }
     .portfolio-img.aparts { background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%); }
+    .portfolio-img.flights { background: linear-gradient(135deg, #4a90e2 0%, #1a3a7a 100%); }
     .portfolio-body { background: #fff; padding: 28px 28px 32px; }
     .portfolio-tag {
       display: inline-block; background: rgba(201,168,76,.15); color: #8a6b1a;
@@ -883,6 +884,15 @@
           <h3>Long-term Rentals</h3>
           <p>Exclusive apartments in the prestigious Prague district of Vinohrady. An ideal solution for long-term stays of managers, expats, and discerning clients who require privacy and superior comfort.</p>
           <a href="dlouhodobe-pronajmy.html" class="portfolio-link">Learn More →</a>
+        </div>
+      </div>
+      <div class="portfolio-card">
+        <a href="https://okletenky.cz/?ok-home#nabidka-sluzeb" target="_blank" rel="noopener" class="portfolio-img flights" style="text-decoration:none;display:flex;">✈️</a>
+        <div class="portfolio-body">
+          <div class="portfolio-tag">Flights</div>
+          <h3>OK Letenky</h3>
+          <p>The Business Travel &amp; Outgoing department provides comprehensive travel services for corporate clients from the Czech Republic.</p>
+          <a href="https://okletenky.cz/?ok-home#nabidka-sluzeb" target="_blank" rel="noopener" class="portfolio-link">Go to flights →</a>
         </div>
       </div>
     </div>
