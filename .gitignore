@@ -6,3 +6,5 @@ node_modules/
 **/.last-deploy-marker
 # Source/original assets (large originals before web compression) — never deploy, never commit
 **/_source/
+# offer.html runtime state (auto-created by offer-api.php on the server) — never commit, never deploy-overwrite
+offer-state.json
