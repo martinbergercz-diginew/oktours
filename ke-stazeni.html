@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- TEMPORARY (staging on oktours.diginew.cz). Remove at cutover to oktours.cz. -->
+  <meta name="robots" content="noindex, nofollow" />
+
+  <title>Ke stažení | OK TOURS</title>
+  <meta name="description" content="Dokumenty ke stažení — výroční zprávy, pozvánky na valnou hromadu a další firemní materiály OK TOURS." />
+  <link rel="canonical" href="https://oktours.diginew.cz/ke-stazeni.html" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    :root {
+      --navy: #0a1f44; --blue: #1a56db; --gold: #c9a84c;
+      --light: #f4f7fb; --text: #2d3748; --muted: #718096;
+      --radius: 10px; --shadow: 0 4px 24px rgba(10,31,68,.12);
+    }
+    body { font-family: 'Open Sans', sans-serif; color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    a { text-decoration: none; color: inherit; }
+
+    /* ── Navigation ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      background: rgba(10,31,68,.96);
+      backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 5vw; height: 70px;
+      box-shadow: 0 2px 16px rgba(0,0,0,.25);
+    }
+    .nav-logo { display: flex; align-items: center; }
+    .nav-logo img { height: 36px; width: auto; }
+    .nav-cta {
+      background: var(--gold); color: var(--navy);
+      padding: 10px 24px; border-radius: 6px;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700; font-size: .875rem;
+      transition: opacity .2s;
+    }
+    .nav-cta:hover { opacity: .88; }
+    .nav-back {
+      color: rgba(255,255,255,.7); font-size: .875rem; font-weight: 500;
+      transition: color .2s; display: flex; align-items: center; gap: 6px;
+    }
+    .nav-back:hover { color: var(--gold); }
+
+    /* ── Hero ── */
+    #intro {
+      min-height: 50vh;
+      background: linear-gradient(135deg, #071628 0%, #0a1f44 55%, #123470 100%);
+      display: flex; align-items: center; justify-content: center;
+      text-align: center; padding: 130px 5vw 80px;
+      position: relative; overflow: hidden;
+    }
+    #intro::before {
+      content: '';
+      position: absolute; inset: 0; z-index: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    #intro > div { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(201,168,76,.15); border: 1px solid rgba(201,168,76,.35);
+      color: var(--gold); padding: 6px 16px; border-radius: 30px;
+      font-size: .8rem; font-weight: 600; letter-spacing: 1px;
+      text-transform: uppercase; margin-bottom: 28px;
+    }
+    #intro h1 {
+      font-family: 'Montserrat', sans-serif;
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 700; color: #fff; line-height: 1.2; margin-bottom: 20px;
+    }
+    #intro p {
+      font-size: clamp(1rem, 1.6vw, 1.1rem);
+      color: rgba(255,255,255,.75); line-height: 1.7;
+    }
+
+    /* ── Downloads list ── */
+    section.downloads { padding: 80px 5vw; background: var(--light); }
+    .downloads-inner { max-width: 880px; margin: 0 auto; }
+    .download-card {
+      display: flex; align-items: center; gap: 24px;
+      background: #fff; padding: 24px 28px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .download-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(10,31,68,.18);
+    }
+    .doc-icon {
+      flex-shrink: 0;
+      width: 56px; height: 56px; border-radius: 8px;
+      background: rgba(201,168,76,.12); color: var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.8rem;
+    }
+    .doc-info { flex: 1; min-width: 0; }
+    .doc-title {
+      font-family: 'Montserrat', sans-serif; font-weight: 700;
+      font-size: 1.05rem; color: var(--navy); margin-bottom: 4px;
+    }
+    .doc-meta { font-size: .85rem; color: var(--muted); }
+    .doc-btn {
+      flex-shrink: 0;
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--gold); color: var(--navy);
+      padding: 10px 20px; border-radius: 6px;
+      font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: .85rem;
+      transition: opacity .2s;
+    }
+    .doc-btn:hover { opacity: .88; }
+
+    /* ── Footer ── */
+    footer {
+      background: #040d1e; color: rgba(255,255,255,.45);
+      text-align: center; padding: 32px 5vw; font-size: .82rem;
+    }
+    footer a { color: var(--gold); }
+    .footer-logos { display: flex; justify-content: center; align-items: center; gap: 32px; margin-top: 20px; }
+    .footer-logos img { width: auto; opacity: .55; filter: grayscale(1) brightness(2); transition: opacity .2s; }
+    .footer-logos img:hover { opacity: .85; }
+    .footer-logos .logo-ack { height: 72px; }
+    .footer-logos .logo-iata { height: 36px; }
+    .footer-legal { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 24px; margin-top: 16px; }
+    .footer-legal a { color: rgba(255,255,255,.45); font-size: .78rem; }
+    .footer-legal a:hover { color: var(--gold); }
+
+    /* ── Mobile ── */
+    @media (max-width: 640px) {
+      .download-card { flex-direction: column; align-items: flex-start; gap: 16px; padding: 20px; }
+      .doc-btn { align-self: stretch; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAVIGATION ── -->
+<nav>
+  <a href="index.html" class="nav-logo">
+    <img src="logo_w.png" alt="OK TOURS, a.s." />
+  </a>
+  <div style="display:flex;align-items:center;gap:24px;">
+    <a href="index.html" class="nav-back">← Zpět na hlavní stránku</a>
+    <a href="index.html#kontakt" class="nav-cta">Kontakt</a>
+  </div>
+</nav>
+
+<!-- ── INTRO ── -->
+<section id="intro">
+  <div>
+    <div class="hero-badge">Dokumenty</div>
+    <h1>Ke stažení</h1>
+    <p>Výroční zprávy, pozvánky na valnou hromadu a další firemní dokumenty společnosti OK TOURS, a.s.</p>
+  </div>
+</section>
+
+<!-- ── DOWNLOADS ── -->
+<section class="downloads">
+  <div class="downloads-inner">
+    <a href="docs/OKT-pozvanka-na-VH-2026.pdf" target="_blank" rel="noopener" class="download-card">
+      <div class="doc-icon">📄</div>
+      <div class="doc-info">
+        <div class="doc-title">Pozvánka na valnou hromadu 2026</div>
+        <div class="doc-meta">PDF · 317 KB</div>
+      </div>
+      <span class="doc-btn">Stáhnout ↓</span>
+    </a>
+
+    <a href="docs/OKT-vyrocni-zprava-2025.pdf" target="_blank" rel="noopener" class="download-card">
+      <div class="doc-icon">📄</div>
+      <div class="doc-info">
+        <div class="doc-title">Výroční zpráva 2025</div>
+        <div class="doc-meta">PDF · 1,4 MB</div>
+      </div>
+      <span class="doc-btn">Stáhnout ↓</span>
+    </a>
+
+    <a href="docs/OKT-zprava-dozorci-rady-2025.pdf" target="_blank" rel="noopener" class="download-card">
+      <div class="doc-icon">📄</div>
+      <div class="doc-info">
+        <div class="doc-title">Zpráva dozorčí rady 2025</div>
+        <div class="doc-meta">PDF · 258 KB</div>
+      </div>
+      <span class="doc-btn">Stáhnout ↓</span>
+    </a>
+
+    <a href="docs/OKT-zprava-predstavenstva-2025.pdf" target="_blank" rel="noopener" class="download-card">
+      <div class="doc-icon">📄</div>
+      <div class="doc-info">
+        <div class="doc-title">Zpráva představenstva 2025</div>
+        <div class="doc-meta">PDF · 198 KB</div>
+      </div>
+      <span class="doc-btn">Stáhnout ↓</span>
+    </a>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div style="margin-bottom:16px">
+    <img src="logo_w.png" alt="OK TOURS" style="height:28px;margin:0 auto;opacity:.7;" loading="lazy" decoding="async" />
+  </div>
+  <p>© 2026 <strong style="color:rgba(255,255,255,.6)">OK TOURS, a.s.</strong> · Všechna práva vyhrazena · <a href="index.html">Zpět na hlavní stránku</a></p>
+  <p style="margin-top:8px">Člen skupiny <a href="http://www.travelalliance.cz/" target="_blank" rel="noopener">Travel Alliance a.s.</a></p>
+  <div class="footer-logos">
+    <img src="logos/ack-cr.png" alt="ACK ČR – člen Asociace cestovních kanceláří České republiky" class="logo-ack" loading="lazy" decoding="async" />
+    <img src="logos/iata.png" alt="IATA accredited agent" class="logo-iata" loading="lazy" decoding="async" />
+  </div>
+  <div class="footer-legal">
+    <a href="docs/obchodni-podminky.pdf" target="_blank" rel="noopener">Obchodní podmínky</a>
+    <a href="docs/gdpr.pdf" target="_blank" rel="noopener">Zásady GDPR</a>
+    <a href="docs/pojistka-ck.pdf" target="_blank" rel="noopener">Pojistka CK OK-TOURS</a>
+    <a href="docs/iata-certifikat.pdf" target="_blank" rel="noopener">IATA Certifikát</a>
+    <a href="docs/koncesni-listina.pdf" target="_blank" rel="noopener">Koncesní listina CK</a>
+    <a href="ke-stazeni.html">Ke stažení</a>
+  </div>
+</footer>
+
+</body>
+</html>
