@@ -4,9 +4,17 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit('Method Not Allowed');
 }
 
-$to      = 'chumpitaz@oktours.cz, plasil@oktours.cz';
+// Route recipients by form_type. Apartments form (dlouhodobe-pronajmy.html)
+// sends a hidden form_type=apartments; everything else uses the default.
+$formType = $_POST['form_type'] ?? 'default';
+if ($formType === 'apartments') {
+    $to      = 'tlaskal@okhotels.cz, trejtnarova@oktours.cz';
+    $subject = 'Nový dotaz – Dlouhodobé a krátkodobé pronájmy';
+} else {
+    $to      = 'chumpitaz@oktours.cz, plasil@oktours.cz';
+    $subject = 'Nový dotaz z webu OK-TOURS';
+}
 $bcc     = 'martinbergercz@gmail.com';
-$subject = 'Nový dotaz z webu OK TOURS';
 
 $name    = htmlspecialchars(trim($_POST['name'] ?? ''));
 $email   = htmlspecialchars(trim($_POST['email'] ?? ''));
