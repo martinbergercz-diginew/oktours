@@ -39,10 +39,9 @@ This project lives in its own dedicated repo (history was extracted from the `pr
 - `team/*.jpg` — 4 leadership portraits
 - `sections/*.jpg` — section banner photos
 - Misc PNGs (icons, hero images)
+- `offer.html` + `offer-api.php` — private client-facing checklist ("Nabídka nového webu"). Deployed but `<meta name="robots" content="noindex, nofollow">` so it stays out of search; share by direct URL only. Runtime state is written by `offer-api.php` to `offer-state.json` on the server — **gitignored, and excluded from the rsync deploy** so deploys never overwrite client progress.
 
 ### Internal (NOT deployed to production)
-- `offer.html` — internal client checklist
-- `offer-api.php`, `offer-state.json` — backing the offer.html state
 - `index-v1.html` — old version reference
 - `CLAUDE.md` — this file
 - `SETUP_GA4.md` — instructions for the next Claude session that wires up Google Analytics
@@ -91,9 +90,9 @@ rsync -avz --delete \
   --exclude='CLAUDE.md' \
   --exclude='SETUP_GA4.md' \
   --exclude='ADMIN_CHAT_SPEC.md' \
-  --exclude='offer.html' \
-  --exclude='offer-api.php' \
+  --exclude='admin-service' \
   --exclude='offer-state.json' \
+  --exclude='.well-known' \
   --exclude='index-v1.html' \
   ./ root@77.42.39.133:/var/www/oktours/ && \
 ssh root@77.42.39.133 "chown -R caddy:caddy /var/www/oktours"
