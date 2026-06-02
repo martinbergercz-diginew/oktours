@@ -146,6 +146,24 @@
       .doc-btn { align-self: stretch; justify-content: center; }
     }
   </style>
+
+  <!-- Cookie banner (Klaro!) + GA4 with Consent Mode v2 -->
+  <script defer src="/klaro-config.js"></script>
+  <script defer src="/klaro.js" data-klaro-config="klaroConfig"></script>
+  <script>
+    // Inline consent default — must run synchronously BEFORE gtag.js loads
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('consent', 'default', {
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      analytics_storage: 'denied',
+      wait_for_update: 500,
+    });
+  </script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-YFBKZHVLZ3"></script>
+  <script defer src="/analytics.js"></script>
 </head>
 <body>
 
@@ -228,6 +246,7 @@
     <a href="docs/iata-certifikat.pdf" target="_blank" rel="noopener">IATA Certifikát</a>
     <a href="docs/koncesni-listina.pdf" target="_blank" rel="noopener">Koncesní listina CK</a>
     <a href="ke-stazeni.html">Ke stažení</a>
+    <a href="javascript:void(0)" onclick="klaro.show()">Cookies</a>
   </div>
 </footer>
 
