@@ -5,4 +5,4 @@ Disallow: /send-mail.php
 Disallow: /index-v1.html
 Allow: /docs/
 
-Sitemap: https://oktours.cz/sitemap.xml
+Sitemap: https://www.oktours.cz/sitemap.xml
