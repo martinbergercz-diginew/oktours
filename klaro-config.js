@@ -67,7 +67,7 @@ window.klaroConfig = {
     },
   },
 
-  privacyPolicy: { cs: "/docs/gdpr.pdf", en: "/docs/gdpr.pdf" },
+  privacyPolicy: { cs: "/docs/gdpr.pdf", en: "/docs/gdpr-en.pdf" },
 
   services: [
     {
