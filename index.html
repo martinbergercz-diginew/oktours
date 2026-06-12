@@ -572,9 +572,24 @@
     <li><a href="#portfolio">Portfolio</a></li>
     <li><a href="#kontakt" class="nav-cta">Kontakt</a></li>
   </ul>
-  <div class="lang-switch" style="display:flex;gap:8px;align-items:center;margin-left:16px;">
-    <span style="font-size:1.2rem;opacity:1;cursor:default;" title="Čeština">🇨🇿</span>
-    <a href="index-en.html" style="font-size:1.2rem;opacity:.5;transition:opacity .2s;" title="English" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'">🇬🇧</a>
+  <div class="lang-switch" style="display:flex;gap:10px;align-items:center;margin-left:16px;">
+    <span style="display:inline-flex;align-items:center;line-height:0;cursor:default;" title="Čeština" aria-label="Čeština">
+      <svg height="14" viewBox="0 0 6 4" aria-hidden="true" focusable="false" style="display:block;border-radius:2px;box-shadow:0 0 0 1px rgba(255,255,255,.18);">
+        <rect width="6" height="2" fill="#fff"/>
+        <rect y="2" width="6" height="2" fill="#d7141a"/>
+        <polygon points="0,0 3,2 0,4" fill="#11457e"/>
+      </svg>
+    </span>
+    <a href="index-en.html" style="display:inline-flex;align-items:center;line-height:0;opacity:.55;transition:opacity .2s;" title="English" aria-label="English" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.55'">
+      <svg height="14" viewBox="0 0 60 30" aria-hidden="true" focusable="false" style="display:block;border-radius:2px;box-shadow:0 0 0 1px rgba(255,255,255,.18);">
+        <clipPath id="uk-clip-cs"><path d="M30,15h30v15zv15H0zH0V0zV0h30z"/></clipPath>
+        <path d="M0,0v30h60V0z" fill="#012169"/>
+        <path d="M0,0L60,30M60,0L0,30" stroke="#fff" stroke-width="6"/>
+        <path d="M0,0L60,30M60,0L0,30" clip-path="url(#uk-clip-cs)" stroke="#C8102E" stroke-width="4"/>
+        <path d="M30,0v30M0,15h60" stroke="#fff" stroke-width="10"/>
+        <path d="M30,0v30M0,15h60" stroke="#C8102E" stroke-width="6"/>
+      </svg>
+    </a>
   </div>
   <button class="nav-toggle" id="navToggle" aria-label="Menu">
     <span></span><span></span><span></span>
