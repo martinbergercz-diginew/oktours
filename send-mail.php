@@ -16,7 +16,8 @@ $elapsed = (int)($_POST['_t'] ?? 0);
 if ($hp !== '' || $elapsed < 3000) {
     $hpSafe = substr(preg_replace('/[^\x20-\x7e]/', '?', $hp), 0, 80);
     $ip     = $_SERVER['REMOTE_ADDR'] ?? '?';
-    error_log("[send-mail] dropped spam — hp='{$hpSafe}', elapsed={$elapsed}ms, ip={$ip}");
+    $ts = date('Y-m-d H:i:s');
+    error_log("[{$ts}] dropped — hp='{$hpSafe}', elapsed={$elapsed}ms, ip={$ip}\n", 3, '/var/log/oktours-spam.log');
     header('Content-Type: application/json');
     echo json_encode(['success' => true]);
     exit;
