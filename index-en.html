@@ -1001,6 +1001,8 @@
         </div>
       </div>
       <form id="contactForm">
+        <!-- Honeypot — hidden from humans, bots will fill it -->
+        <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" />
         <input type="text" name="name" placeholder="Your full name" required />
         <input type="email" name="email" placeholder="Company email" required />
         <input type="text" name="company" placeholder="Company name" />
@@ -1065,12 +1067,9 @@
     btn.textContent = 'Sending...';
     try {
       const f = this;
-      const fd = new FormData();
-      fd.append('name',    f.name.value);
-      fd.append('email',   f.email.value);
-      fd.append('company', f.company.value);
-      fd.append('topic',   f.topic.value);
-      fd.append('message', f.message.value);
+      const fd = new FormData(this);
+      // Anti-spam time-check: how long after page load was this submitted
+      fd.append('_t', String(Math.floor(performance.now())));
       const res = await fetch('send-mail.php', { method: 'POST', body: fd });
       const data = await res.json();
       if (data.success === true) {

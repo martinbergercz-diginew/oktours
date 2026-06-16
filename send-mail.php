@@ -4,6 +4,24 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit('Method Not Allowed');
 }
 
+// ── Anti-spam: honeypot + time-check ────────────────────────────────────
+// Bots auto-fill any input field they see, including the hidden "website"
+// honeypot. Humans never see it. The _t field is the page-load-to-submit
+// elapsed time in ms — anything under 3 seconds is almost certainly a
+// scripted submission (real users can't fill the form that fast).
+// On either trigger we silently return success so the bot moves on, but
+// do NOT send the e-mail. Drops are written to syslog for monitoring.
+$hp      = trim($_POST['website'] ?? '');
+$elapsed = (int)($_POST['_t'] ?? 0);
+if ($hp !== '' || $elapsed < 3000) {
+    $hpSafe = substr(preg_replace('/[^\x20-\x7e]/', '?', $hp), 0, 80);
+    $ip     = $_SERVER['REMOTE_ADDR'] ?? '?';
+    error_log("[send-mail] dropped spam — hp='{$hpSafe}', elapsed={$elapsed}ms, ip={$ip}");
+    header('Content-Type: application/json');
+    echo json_encode(['success' => true]);
+    exit;
+}
+
 // Route recipients by form_type. Apartments form (dlouhodobe-pronajmy.html)
 // sends a hidden form_type=apartments; everything else uses the default.
 $formType = $_POST['form_type'] ?? 'default';

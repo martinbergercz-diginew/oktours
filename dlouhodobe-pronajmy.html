@@ -352,6 +352,8 @@
     <p class="lead" style="margin:0 auto 40px;">Ozveme se vám do 24 hodin s individuální nabídkou.</p>
     <form id="contactForm">
       <input type="hidden" name="form_type" value="apartments" />
+      <!-- Honeypot — hidden from humans, bots will fill it -->
+      <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" />
       <input type="text" name="name" placeholder="Vaše jméno a příjmení" required />
       <input type="email" name="email" placeholder="Váš e-mail" required />
       <textarea name="message" placeholder="Váš dotaz nebo popis potřeb..."></textarea>
@@ -406,6 +408,8 @@
     try {
       const f = this;
       const fd = new FormData(this);
+      // Anti-spam time-check: how long after page load was this submitted
+      fd.append('_t', String(Math.floor(performance.now())));
       const res = await fetch('send-mail.php', { method: 'POST', body: fd });
       const data = await res.json();
       if (data.success === true) {
