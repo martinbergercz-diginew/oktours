@@ -93,6 +93,7 @@ rsync -avz --delete \
   --exclude='admin-service' \
   --exclude='offer-state.json' \
   --exclude='.well-known' \
+  --exclude='sibelius-mail.php*' \
   --exclude='index-v1.html' \
   ./ root@77.42.39.133:/var/www/oktours/ && \
 ssh root@77.42.39.133 "chown -R caddy:caddy /var/www/oktours"
