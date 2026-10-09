@@ -30,7 +30,7 @@ if ($formType === 'apartments') {
     $to      = 'tlaskal@okhotels.cz, trejtnarova@oktours.cz';
     $subject = 'Nový dotaz – Dlouhodobé a krátkodobé pronájmy';
 } else {
-    $to      = 'chumpitaz@oktours.cz, plasil@oktours.cz';
+    $to      = 'chumpitaz@oktours.cz, plasil@oktours.cz, trejtnarova@oktours.cz';
     $subject = 'Nový dotaz z webu OK-TOURS';
 }
 $bcc     = 'martinbergercz@gmail.com';
